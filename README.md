@@ -1,6 +1,7 @@
 # Optuma Local Data REST Server
-
-**_NOTE:_**  This is under development and is not ready for use until this note is removed.
+---
+This is under development and is not ready for use until this note is removed.
+---
 
 This project allows anyone to connect Optuma to a data service that Optuma does not support directly. Because nearly every data source has their own format, there needs to be an interpreter that can speak both the Optuma and data provider language. This Node server can be used as the interpreter.
 
