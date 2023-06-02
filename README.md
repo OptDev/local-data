@@ -4,9 +4,15 @@ This project allows anyone to connect Optuma to a data service that Optuma does 
 
 On start-up, Optuma will serach for any local-data configuration files. The configuration contains all the information that Optuma needs to connect to the local Node server. Optuma will also create a custom folder in the Security Selector but the Node server should be able to accept all Optuma securities and translate those too.
 
+To create a new interface, you will need to develop or download the applicable javascript file that Node can run. The javascript is where you will define the translation between Optuma and the data source.
+
 ## Instalation
 
-### Download Node Server
+### Install Node
+If you've never used Node on your PC, you will need to download and install the Node application. Node is a javascript server application that is used by millions of applications around the world.
+https://nodejs.org/en/download
+
+### Download Optuma Node Server
 
 ```
 git clone https://github.com/OptDev/local-data.git
