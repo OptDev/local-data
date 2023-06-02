@@ -86,19 +86,6 @@ As mentioned above, the default location for this file is
 {Documents}\Optuma\Local\Common
 ```
 
-It's important to note that there can be multiple data sources configured in this one file. Each service will be under a master node in the yaml file.
-Note: If multiple services are being used on the same PC (as a server), they must operate on unique ports.
-```
----
-demo1:
-  name...
-  ...
-
-demo2:
-   name...
-   ...
-```
-
 The following is an example of the configuration file.
 ```
 ---
@@ -136,3 +123,17 @@ demo1:
 | search_type || set of strings | In the Optuma search, what are the options that should be shown to the user. | Search by Code\|Search by Description\|Search By FIGI |
 
 ^ For services where a user specific password or token is required, it is recommended that those details not be entered in here but rather the user enters them when they *Configure Data Providers* in Optuma.
+
+It's important to note that there can be multiple data sources configured in this one file. Each service will be under a master node in the yaml file.
+Note: If multiple services are being used on the same PC (as a server), they must operate on unique ports.
+```
+---
+demo1:
+  name...
+  ...
+
+demo2:
+   name...
+   ...
+```
+
