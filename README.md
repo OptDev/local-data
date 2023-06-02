@@ -11,6 +11,11 @@ On start-up, Optuma will serach for any local-data configuration files. The conf
 ```
 git clone https://github.com/OptDev/local-data.git
 ```
+### Install packages
+
+```
+npm install
+```
 
 ### Start Node Server
 
