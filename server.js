@@ -1,27 +1,17 @@
-# local-data
+const express = require('express')
+const axios = require('axios')
+const sampleDaily = require('./data/AAA.json')
+const sampleTicks = require('./data/sampleTicks.json')
 
-Node server example to interface with Optuma
+const app = express()
+const port = 3000 // or any port number you prefer
 
-## Setup
+// Middleware to parse JSON requests
+app.use(express.json())
 
-Go to your development folder and clone this repo
+let externalStream // hold the external data stream reference so this can be closed / cancelled in close_stream
 
-```
-git clone https://github.com/OptDev/local-data.git
-```
-
-Start the server by typing the following:
-
-```
-node server.js
-```
-
-## server.js development \*\*
-
-Here are some sample codes:
-
-```
-/*
+/* 
  In custom_providers.yaml. If authenticate value is false, Optuma will not send login or logout request.
 */
 app.post('/api/login', async (req, res) => {
@@ -30,10 +20,21 @@ app.post('/api/login', async (req, res) => {
       const base64Credentials = req.headers.authorization.split(' ')[1]
       const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
       const [username, password] = credentials.split(':')
+      console.log('login ', username, password)
     }
 
+    // const response = await axios.post('https://external-server.com/login', {
+    //   username,
+    //   password
+    // });
+
     var authenticated = true
+
+    // Check the response from the external server for successful authentication
     if (authenticated) {
+      // if (response.data.authenticated) {
+      // If authenticated, you can generate a token or session for the user
+
       // Return a success response
       res.json({ status: '1', message: 'Login successful', token: 'generated_token' })
     } else {
@@ -48,9 +49,40 @@ app.post('/api/login', async (req, res) => {
 })
 
 /*
+  In custom_providers.yaml. If authenticate value is true.
+  Optuma sends logout request when this data provider is disconnected manually or during shutdown.
+*/
+app.post('/api/logout', async (req, res) => {
+  try {
+    if (req.headers.authorization) {
+      const base64Credentials = req.headers.authorization.split(' ')[1]
+      const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
+      const [username, password] = credentials.split(':')
+      console.log('logout ', username, password)
+    }
+
+    var authenticated = true
+    // Check the response from the external server
+    if (authenticated) {
+      // if (response.data.authenticated) {
+
+      // Return a success response
+      res.json({ status: '1', message: 'Logout successful', status: 'success' })
+    } else {
+      // If authentication failed
+      res.status(401).json({ message: 'Logout failed' })
+    }
+  } catch (error) {
+    // Handle any errors that occurred during the request
+    console.error('Error during logout:', error)
+    res.status(500).json({ message: 'Error during logout' })
+  }
+})
+
+/*
 Optuma sends open_stream get request with a list of live symbols
 based on availability, MICs and FIGIs list are matched to the symbols list.
-E.g.,
+E.g.,  
   symbols = code1, code2, code3
   mics = MIC for code1, MIC for code2, MIC for code3, .. etc
   figis = FIGI for code1, ...  etc
@@ -64,12 +96,12 @@ Optuma uses exchange date time for the EOD data. If this data provider supports 
 {"status":1,"heartbeat": 1},
 {"status":1,"symbol":"CBA","datetime":"2023-05-22 17:30:30.15","daydate":"2023-05-22","open":95.61,"close":97.61,"high":98.61,"low":94.61,"volume":1234567,"netchange": 2, "type":"s","complete":true},
 {"status":1,"heartbeat": 1},
-{"status":1,"symbol":"CBA","datetime":"2023-05-22 17:22:38.15","daydate":"2023-05-22","close":97.60, "volume":100,"type":"t","complete":true},
+{"status":1,"symbol":"CBA","datetime":"2023-05-22 17:22:38.15","daydate":"2023-05-22","close":97.60, "volume":100,"type":"t","complete":true},  
 {"status":1,"heartbeat": 1},
 {"status":1,"symbol":"CBA","datetime":"2023-05-22 17:30:32.15","daydate":"2023-05-22","open":93.63,"close":95.63,"high":96.63,"low":92.63,"volume":1204567,"netchange": 2, "type":"q","complete":true},
 {"status":1,"heartbeat": 1}
 
-type q - quote
+type q - quote 
   for equity, this is used separately only for display in the watchlist, course of trades or chart header. This should have OHLCV and other fields for display.
   for FX, this is usually the only data received. So the Bid of the quote is also being treated as the trade tick that is the latest close or last value for the current bar.
 
@@ -83,6 +115,17 @@ type s - snapshot of current day
 app.get('/api/open_stream', (req, res) => {
   const { symbols, mics, figis } = req.query
   console.log('open stream ', symbols, ' ', mics, ' ', figis)
+
+  // try {
+  //   // Make the GET request to the external server for streaming data
+  //   externalStream = axios.get('https://external-server.com/stream', {
+  //   responseType: 'stream' // Set the response type to stream
+  //   });
+  //
+  // } catch (error) {
+  //   console.error('Error retrieving streaming data:', error);
+  //   res.status(500).json({ message: 'Error retrieving streaming data' });
+  // }
 
   // todo - simulation for live data
   const data = sampleTicks
@@ -102,12 +145,42 @@ app.get('/api/open_stream', (req, res) => {
 })
 
 /*
+  close_stream provides a way to manage the stream resources.
+
+  Optuma does not open a new stream immediately upon close_stream.
+  It waits until there is a new code request. Then it kills the previous open_stream request and 
+  recreate a new open_stream with a new list of open codes.
+*/
+app.get('/api/close_stream', async (req, res) => {
+  try {
+    const { symbol, mic, figi } = req.query
+
+    console.log('close_stream ', symbol, ' ', mic, ' ', figi)
+
+    // the following codes are for demo only
+    externalStream = true
+    if (externalStream) {
+      // Close the stream by canceling the request
+      // externalStream.cancel()
+      externalStream = null
+
+      res.json({ status: 1, message: 'Stream closed successfully' })
+    } else {
+      res.json({ status: 0, message: 'No active stream to close' })
+    }
+  } catch (error) {
+    console.error('Error closing stream:', error)
+    res.status(500).json({ message: 'Error closing stream' })
+  }
+})
+
+/*
   get_history request is being sent first when open a chart.
   after the history is completed, then Optuma sends open_stream request
 
   if last_data_set = 0, it means there is more than one response for the current request.
   when receiving the last response, make sure to set last_data_set = 1
-
+  
   Optuma is able to process each response separately and reflect on the chart.
   symbol in req.query is the unique code that is used to match the source of the request
 */
@@ -147,6 +220,17 @@ app.get('/api/get_history', async (req, res) => {
   }
 })
 
+/*
+  search_ticker request is sent from the Search By Code dialog in Optuma.
+  You can find this option from the right click menu of the custom provider exchange that is listed in the security selector in Optuma.
+
+  In custom_provider.yaml file, if the search_type is empty or missing, then the Search button is disabled.
+  It means the client should not be able to send this request.
+
+  You can name and extend the search types.
+  type in the req.query is an integer, which is the index of the search types provided in custom_provider.yaml file.
+
+*/
 app.get('/api/search_ticker', (req, res) => {
   try {
     const { search, type } = req.query
@@ -189,64 +273,3 @@ app.get('/api/search_ticker', (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`)
 })
-```
-
-## Config file - custom_providers.yaml
-
-Place this file in the Optuma Data Folder.
-
-This defines the data provider and how Optuma interacts with it.
-
-```
----
-demo1:
-  name: Demo Custom Provider
-  code: demo1
-  comment1: |
-    [code] is a unique name id for the custom provider as well as its custom exchange id.
-  authenticate:
-    value: true
-    username: demouser
-    password:
-    token: 222
-    comment: |
-      If [authenticate] value is false, login details (username, password, token) will be ignored and not display in Optuma. |
-      [authenticate] can only have either password or token/API Key. |
-      If both password and token/API Key are present, Optuma only shows API Key input field.
-  web: https://google.com
-  comment2: |
-    [web] address is the link display in Optuma Config Data Providers for clients to visit your web page.
-  server: http://localhost
-  port: 3000
-  data_products: 1,6
-  comment3: |
-    [data_products] is a comma separated list of Optuma exchange id supported by this provider. |
-    1 - ASX, 6 - Foreign Exchange   Please refer to the Optuma's exchange list. |
-    This means this provider supports ASX and FX data. |
-    Users can see these exchanges apepar in the Config Data Providers page to select them.
-  timeframe: Day,Minute,Tick
-  realtime: true
-  comment4: |
-    [timeframe] is the type of history data supported for the data_products. |
-    If it only supports Day, please also indicate if this has real time ticks or not. |
-    If it does not, then set [realtime] to false
-  search_type: Search by Code|Search by Description|By MIC
-  comment5: |
-    if [search_type] is empty or missing, then the search button in Optuma is disabled.
-```
-
-It can have multiple data providers.
-
-```
----
-demo1:
-  name...
-  ...
-  ...
-
-demo2:
-   name...
-   ...
-   ...
-
-```
