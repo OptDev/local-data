@@ -70,10 +70,10 @@ CONGRATULATIONS - you have sucessfully connected your copy of Optuma to a REST s
 Now that you have a connection established, you can start to develop your connection. 
 
 NOTE: If you plan to submit your work back into the public repository for others to use, please follow these guidelines.
-# Never include passwords or tokens in your js files and upload them to the repository. They should be configured in the Custom_Providers.yaml file by the user when necessary.
-# Create a folder under *Interfaces* with the name of the data source your work is for.
-# copy server.js into this new location
-# copy Custom_Providers.yaml into this location and fill with sample data that another user will update. Note: this file will not be used in this location, it is only there as a reference of how to access your system. While developing, you will need to edit the Custom_Providers.yaml file in the Optuma Documents location.
+* Never include passwords or tokens in your js files and upload them to the repository. They should be configured in the Custom_Providers.yaml file by the user when necessary.
+* Create a folder under *Interfaces* with the name of the data source your work is for.
+* copy server.js into this new location
+* copy Custom_Providers.yaml into this location and fill with sample data that another user will update. Note: this file will not be used in this location, it is only there as a reference of how to access your system. While developing, you will need to edit the Custom_Providers.yaml file in the Optuma Documents location.
 
 
 
