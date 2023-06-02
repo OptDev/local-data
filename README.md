@@ -36,7 +36,11 @@ git clone https://github.com/OptDev/local-data.git
 You can also download the code by pressing on the Green Code button at the top right of this page.
 
 ### Open VSCode
-Select the folder that you downloaded.
+In VS Code:
+* Select the folder that you downloaded as the workspace.
+* Open server.js
+* From the Menu, select *Terminal* then *New Terminal*
+* In the new Terminal Window type the following commands
 
 #### Install packages
 ```
