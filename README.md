@@ -116,6 +116,6 @@ demo1:
   data_products: 1,6
   timeframe: Day,Minute,Tick
   realtime: true
-  search_type: Search by Code|Search by Description|By MIC
+  search_type: Search by Code|Search by Description|Search by Figi
 ```
 
