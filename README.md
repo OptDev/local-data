@@ -1,5 +1,7 @@
 # Optuma Local Data REST Server
 
+**_NOTE:_**  This is under development and is not ready for use until this note is removed.
+
 This project allows anyone to connect Optuma to a data service that Optuma does not support directly. Because nearly every data source has their own format, there needs to be an interpreter that can speak both the Optuma and data provider language. This Node server can be used as the interpreter.
 
 Note: we are using Node.js as the platform for the data server in our examples. You can also develop a REST based server (either as an application or a hosted web server) using any environment you are familar with.
