@@ -78,62 +78,44 @@ NOTE: If you plan to submit your work back into the public repository for others
 
 
 
-### Config file - custom_providers.yaml
+## Configuration File
 
-Create `custom_providers.yaml` and place this file in the Optuma Data Folder.
-
-This defines the data provider and how Optuma interacts with it.
-
+The way that Optuma knows that there is a data service available, and how to connect to it, is through the Custom_Providers.yaml file.
+As mentioned above, the default location for this file is
 ```
----
-demo1:
-  name: Demo Custom Provider
-  code: demo1
-  comment1: |
-    [code] is a unique name id for the custom provider as well as its custom exchange id.
-  authenticate:
-    value: true
-    username: demouser
-    password:
-    token: 222
-    comment: |
-      If [authenticate] value is false, login details (username, password, token) will be ignored and not display in Optuma. |
-      [authenticate] can only have either password or token/API Key. |
-      If both password and token/API Key are present, Optuma only shows API Key input field.
-  web: https://google.com
-  comment2: |
-    [web] address is the link display in Optuma Config Data Providers for clients to visit your web page.
-  server: http://localhost
-  port: 3000
-  data_products: 1,6
-  comment3: |
-    [data_products] is a comma separated list of Optuma exchange id supported by this provider. |
-    1 - ASX, 6 - Foreign Exchange   Please refer to the Optuma's exchange list. |
-    This means this provider supports ASX and FX data. |
-    Users can see these exchanges apepar in the Config Data Providers page to select them.
-  timeframe: Day,Minute,Tick
-  realtime: true
-  comment4: |
-    [timeframe] is the type of history data supported for the data_products. |
-    If it only supports Day, please also indicate if this has real time ticks or not. |
-    If it does not, then set [realtime] to false
-  search_type: Search by Code|Search by Description|By MIC
-  comment5: |
-    if [search_type] is empty or missing, then the search button in Optuma is disabled.
+{Documents}\Optuma\Local\Common
 ```
 
-It can have multiple data providers.
-
+It's important to note that there can be multiple data sources configured in this one file. Each service will be under a master node in the yaml file.
+Note: If multiple services are being used on the same PC (as a server), they must operate on unique ports.
 ```
 ---
 demo1:
   name...
   ...
-  ...
 
 demo2:
    name...
    ...
-   ...
-
 ```
+
+The following is an example of the configuration file.
+```
+---
+demo1:
+  name: Demo Custom Provider
+  code: demo1
+  authenticate:
+    value: true
+    username: demouser
+    password:
+    token: 222
+  web: https://google.com
+  server: http://localhost
+  port: 3000
+  data_products: 1,6
+  timeframe: Day,Minute,Tick
+  realtime: true
+  search_type: Search by Code|Search by Description|By MIC
+```
+
