@@ -6,7 +6,7 @@ On start-up, Optuma will serach for any local-data configuration files. The conf
 
 To create a new interface, you will need to develop or download the applicable javascript file that Node can run. The javascript is where you will define the translation between Optuma and the data source.
 
-## Installation
+## Required Applications
 
 ### Install Node
 If you've never used Node on your PC, you will need to download and install the Node application. Node is a javascript server application that is used by millions of applications around the world.
@@ -17,6 +17,7 @@ Note: The Ndoe application can be installed anywhere and the default that they s
 VSC is a code editor provided for free by Microsoft. You can download it from https://code.visualstudio.com/download
 If you already have VSC installed, make sure you restart it after installing Node above.
 
+## Installation
 ### Download Optuma Node Server
 
 ```
