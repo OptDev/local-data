@@ -122,7 +122,7 @@ demo1:
 | --- | --- | --- | --- | --- |
 | name | * | string | The name that will be displayed in Optuma. Usually it is best to keep it as the name of the provider. | Bears Data |
 | code | * | string | A short unique code (3 t0 4 letters max) for this feed. The code is stored with the symbol in Optuma. | BEAR |
-| authenticate || node | The authentication settings | |
+| authenticate | * | node | The authentication settings | |
 | value | * | boolean | Does Optuma need to manage authentication settings for this connection. Typically, this is used in remote services where the client has an account and is required to login. | true |
 | username || string | The default username. The user will be prompted to update this when they configure the connection in Optuma. | user |
 | password^ || string | The default password. The user will be prompted to update this when they configure the connection in Optuma. | |
