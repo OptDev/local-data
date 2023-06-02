@@ -87,7 +87,7 @@ As mentioned above, the default location for this file is
 ```
 
 The following is an example of the configuration file.
-```
+```yaml 
 ---
 demo1:
   name: Demo Custom Provider
