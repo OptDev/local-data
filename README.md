@@ -120,7 +120,7 @@ demo1:
 | data_products || integers | A comma seperated array of Optuma data product ids. A partial list of the ids and the Optuma Data Selection they represent is included below. If this is not set, individual securities will have to be manually added in Optuma. | 1, 6, 181 |
 | timeframes | * | set of strings | A comma separated array of time frames which this service can return historical data for. | Day, Minute, Tick |
 | realtime | * | boolean | Does this service return streaming tick data? | false |
-| search_type || set of strings | In the Optuma search, what are the options that should be shown to the user. | Search by Code\|Search by Description\|Search By FIGI |
+| search_type || set of strings | A pipe (\|) separated array of search strings. In the Optuma search, what are the options that should be shown to the user. | Search by Code\|Search by Description\|Search By FIGI |
 
 ^ For services where a user specific password or token is required, it is recommended that those details not be entered in here but rather the user enters them when they *Configure Data Providers* in Optuma.
 
