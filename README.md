@@ -200,7 +200,7 @@ app.listen(port, () => {
 
 ### Config file - custom_providers.yaml
 
-Create and place this file in the Optuma Data Folder.
+Create `custom_providers.yaml` and place this file in the Optuma Data Folder.
 
 This defines the data provider and how Optuma interacts with it.
 
