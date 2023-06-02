@@ -13,6 +13,10 @@ If you've never used Node on your PC, you will need to download and install the 
 https://nodejs.org/en/download
 Note: The Ndoe application can be installed anywhere and the default that they suggest is best. Do not install it into the same directory as any Optuma programs.
 
+### Install Visual Studio Code
+VSC is a code editor provided for free by Microsoft. You can download it from https://code.visualstudio.com/download
+If you already have VSC installed, make sure you restart it after installing Node above.
+
 ### Download Optuma Node Server
 
 ```
