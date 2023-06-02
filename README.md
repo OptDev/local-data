@@ -2,13 +2,15 @@
 
 This project allows anyone to connect Optuma to a data service that Optuma does not support directly. Because nearly every data source has their own format, there needs to be an interpreter that can speak both the Optuma and data provider language. This Node server can be used as the interpreter.
 
-On start-up, Optuma will serach for any local-data configuration files. The configuration contains all the information that Optuma needs to connect to the local Node server. Optuma will also create a custom folder in the Security Selector but the Node server should be able to accept all Optuma securities and translate those too.
+Note: we are using Node.js as the platform for the data server in our examples. You can also develop a REST based server (either as an application or a hosted web server) using any environment you are familar with.
+
+On start-up, Optuma will search for any local-data configuration files. The configuration contains all the information that Optuma needs to connect to the local Node server. Optuma will also create a custom folder in the Security Selector but the Node server should be able to accept all Optuma securities and translate those too.
 
 To create a new interface, you will need to develop or download the applicable javascript file that Node can run. The javascript is where you will define the translation between Optuma and the data source.
 
 ## Required Applications
 
-### Install Node
+### Node.js
 If you've never used Node on your PC, you will need to download and install the Node application. Node is a javascript server application that is used by millions of applications around the world.
 https://nodejs.org/en/download
 Note: The Ndoe application can be installed anywhere and the default that they suggest is best. Do not install it into the same directory as any Optuma programs.
