@@ -129,11 +129,13 @@ Note: If multiple services are being used on the same PC (as a server), they mus
 ```yaml
 ---
 demo1:
-  name...
+  name: Data Source 1
   ...
+  port: 3000
 
 demo2:
-   name...
+   name: Data Source 2
    ...
+   port: 3001
 ```
 
