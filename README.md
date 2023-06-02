@@ -118,20 +118,20 @@ demo1:
   realtime: true
   search_type: Search by Code|Search by Description|Search by Figi
 ```
-| Field | Type | Description | Example |
-| --- | --- | --- | --- |
-| name | string | The name that will be displayed in Optuma. Usually it is best to keep it as the name of the provider. | Bears Data |
-| code | string | A short unique code (3 t0 4 letters max) for this feed. The code is stored with the symbol in Optuma. | BEAR |
-| authenticate | node | The authentication settings | |
-| value | boolean | Does Optuma need to manage authentication settings for this connection. Typically, this is used in remote services where the client has an account and is required to login. | true |
-| username | string | The default username. The user will be prompted to update this when they configure the connection in Optuma. | user |
-| password^ | string | The default password. The user will be prompted to update this when they configure the connection in Optuma. | |
-| token | string | Some providers may require a token to be stored and sent. Typically, this is used in remote services where the client has an account and is required to login. | JzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva |
-| web | string | This is the web address of a page that explains more about this connection. It is displayed as a *More Information* link in the connection configuration form in Optuma. | https://github.com/OptDev/local-data | 
-| server | string | The address of the REST server that Optuma needs to connect to. | http://localhost |
-| port | integer | The port, or channel, that the REST server is expecting connections on. This must be a unique unused port on each server/pc. | 3000 |
-| data_products | integers | A comma seperated array of Optuma data product ids. A partial list of the ids and the Optuma Data Selection they represent is included below. If this is not set, individual securities will have to be manually added in Optuma. | 1, 6, 181 |
-| timeframes | set of strings | A comma separated array of time frames which this service can return historical data for. | Day, Minute, Tick |
-| realtime | boolean | Does this service return streaming tick data? | false |
-| search_type | set of strings | In the Optuma search, what are the options that should be shown to the user. | Search by Code|Search by Description|Search By FIGI |
+| Field | Required | Type | Description | Example |
+| --- | --- | --- | --- | --- |
+| name | * | string | The name that will be displayed in Optuma. Usually it is best to keep it as the name of the provider. | Bears Data |
+| code | * | string | A short unique code (3 t0 4 letters max) for this feed. The code is stored with the symbol in Optuma. | BEAR |
+| authenticate || node | The authentication settings | |
+| value | * | boolean | Does Optuma need to manage authentication settings for this connection. Typically, this is used in remote services where the client has an account and is required to login. | true |
+| username || string | The default username. The user will be prompted to update this when they configure the connection in Optuma. | user |
+| password^ || string | The default password. The user will be prompted to update this when they configure the connection in Optuma. | |
+| token || string | Some providers may require a token to be stored and sent. Typically, this is used in remote services where the client has an account and is required to login. | JzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva |
+| web || string | This is the web address of a page that explains more about this connection. It is displayed as a *More Information* link in the connection configuration form in Optuma. | https://github.com/OptDev/local-data | 
+| server | * | string | The address of the REST server that Optuma needs to connect to. | http://localhost |
+| port | * | integer | The port, or channel, that the REST server is expecting connections on. This must be a unique unused port on each server/pc. | 3000 |
+| data_products || integers | A comma seperated array of Optuma data product ids. A partial list of the ids and the Optuma Data Selection they represent is included below. If this is not set, individual securities will have to be manually added in Optuma. | 1, 6, 181 |
+| timeframes | * | set of strings | A comma separated array of time frames which this service can return historical data for. | Day, Minute, Tick |
+| realtime | * | boolean | Does this service return streaming tick data? | false |
+| search_type || set of strings | In the Optuma search, what are the options that should be shown to the user. | Search by Code|Search by Description|Search By FIGI |
 
