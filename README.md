@@ -1,22 +1,24 @@
 # local-data
 
-Node server example to interface with Optuma
+This project allows anyone to connect Optuma to a data service that Optuma does not support directly. Because nearly every data source has their own format, there needs to be an interpreter that can speak both the Optuma and data provider language. This Node server can be used as the interpreter.
 
-## Setup
+On start-up, Optuma will serach for any local-data configuration files. The configuration contains all the information that Optuma needs to connect to the local Node server. Optuma will also create a custom folder in the Security Selector but the Node server should be able to accept all Optuma securities and translate those too.
 
-Go to your development folder and clone this repo
+## Instalation
+
+### Download Node Server
 
 ```
 git clone https://github.com/OptDev/local-data.git
 ```
 
-Start the server by typing the following:
+### Start Node Server
 
 ```
 node server.js
 ```
 
-## server.js development \*\*
+### Develop server.js
 
 Here are some sample codes:
 
@@ -191,9 +193,9 @@ app.listen(port, () => {
 })
 ```
 
-## Config file - custom_providers.yaml
+### Config file - custom_providers.yaml
 
-Place this file in the Optuma Data Folder.
+Create and place this file in the Optuma Data Folder.
 
 This defines the data provider and how Optuma interacts with it.
 
