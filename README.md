@@ -9,6 +9,9 @@ On start-up, Optuma will search for any local-data configuration files. The conf
 To create a new interface, you will need to develop or download the applicable javascript file that Node can run. The javascript is where you will define the translation between Optuma and the data source.
 
 ## Prerequisites
+### Optuma
+This local data server interface was introduced in Optuma 2.2 (due July 2023)
+
 ### Optuma Services
 The ability to access local data in Optuma is restricted to subscribers of Enterprise, Professional, or Trader Services. You need to make sure you have an active subscription to Optuma before this will work.
 
