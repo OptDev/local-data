@@ -11,7 +11,7 @@ To create a new interface, you will need to develop or download the applicable j
 
 ## Prerequisites
 ### Optuma
-This local data server interface was introduced in Optuma 2.2 (due July 2023)
+This local data server interface was introduced in Optuma 2.2 (due July 2023). This will work in active trial editions. You can register for an Optuma trial at https://www.optuma.com/demo
 
 ### Optuma Services
 The ability to access local data in Optuma is restricted to subscribers of Enterprise, Professional, or Trader Services. You need to make sure you have an active subscription to Optuma before this will work.
