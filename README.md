@@ -149,3 +149,21 @@ demo2:
    port: 3001
 ```
 
+### Making Your Server Public
+Once you have coded a new Node server and it is all working well, you can commit and push your server back to OptDev, so it is available for others to use. Follow these steps to make your local data server available to to others.
+
+Fork: You first create a personal copy of this project by "forking" the project in Github.
+
+Branch: In your forked repository, you create a new branch off the main branch to work on your proposed changes. 
+
+Make Changes: Create a new folder with the provider name under the Interfaces folder as a place to add your new server code.
+
+Commit: As you work on your changes, you commit your modifications to the branch.
+
+Push: Once you're ready to share your changes with the original project, you push your branch with the committed changes to your forked repository on the version control platform.
+
+Create a Pull Request: On Github, you initiate a pull request by comparing the changes in your branch with the original project's main branch. This action submits a request for the project maintainers to review your proposed changes.
+
+Review and Discussion: The project maintainers will review your changes, providing feedback. This process often takes place in the comments section of the pull request.
+
+Merge: Once the project maintainers are satisfied with your additions, they can choose to merge your branch into the main branch of the original project. This action incorporates your modifications into the official codebase available for others.
