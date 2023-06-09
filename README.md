@@ -89,10 +89,10 @@ NOTE: If you plan to submit your work back into the public repository for others
 
 ## Configuration File
 
-The way that Optuma knows that there is a data service available, and how to connect to it, is through the Custom_Providers.yaml file.
+The way that Optuma knows that there is a data service available, and how to connect to it, is through the **Custom_Providers.yaml** file.
 As mentioned above, the default location for this file is
 ```
-{Documents}\Optuma\Local\Common
+{Documents}\Optuma\Local\Common\Custom_Providers.yaml
 ```
 
 The following is an example of the configuration file.
