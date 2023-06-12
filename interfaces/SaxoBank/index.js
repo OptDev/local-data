@@ -160,7 +160,7 @@ class SaxoBank {
       axios
         .post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, headers)
         .then((response) => {
-          console.log('access_token renewed', response.data.access_token)
+          // console.log('access_token renewed', response.data.access_token)
           this.#saveAccessTokenData(dataProvider, opUsername, response.data)
         })
         .catch((error) => {})
