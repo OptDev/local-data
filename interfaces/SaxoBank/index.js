@@ -10,6 +10,9 @@ https://www.developer.saxo/openapi/learn/environments
 saxobank reference
 https://www.developer.saxo/openapi/referencedocs
 
+saxobank oauth
+https://www.developer.saxo/openapi/learn/oauth-authorization-code-grant
+
 saxobank AssetType
 https://www.developer.saxo/openapi/referencedocs/ref/v1/instruments/getsummaries/7f1a5b8199f43fc1d794ce9e279d8c34/assettype/c9311a0d718a7ee55bd9b386f1514d00
 
@@ -40,7 +43,7 @@ class SaxoBank {
     const payload = {
       grant_type: 'authorization_code',
       code: code,
-      redirect_uri: process.env.SXAOBANK_LOCAL_DATA_CALLBACK_URL,
+      redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
     }
     const config = {
       headers: {
@@ -90,7 +93,7 @@ class SaxoBank {
       response_type: 'code', // Please do not change. It must be 'code'
       client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
       state: dataProvider + '.' + opUsername,
-      redirect_uri: process.env.SXAOBANK_LOCAL_DATA_CALLBACK_URL,
+      redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
     })
     const authFullUrl = process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
     return {
@@ -107,7 +110,7 @@ class SaxoBank {
     const payload = {
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      redirect_uri: process.env.SXAOBANK_LOCAL_DATA_CALLBACK_URL,
+      redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
     }
     const headers = {
       headers: {
@@ -131,6 +134,72 @@ class SaxoBank {
     accessTokenData.expiry = currentTime + accessTokenData.expires_in
     accessTokenData.refresh_token_expiry = currentTime + accessTokenData.refresh_token_expires_in
     fs.writeFileSync(accessTokenFile, JSON.stringify(accessTokenData))
+  }
+
+  // This is called setInterval
+  refreshAccessToken(accessTokenFile, dataProvider, opUsername) {
+    const currentTime = Math.round(Date.now() / 1000)
+    const accessTokenData = JSON.parse(fs.readFileSync('./data/' + accessTokenFile, 'utf8'))
+    // Is refresh_token available?
+    if (accessTokenData.refresh_token_expiry > currentTime) {
+      const client_id = process.env.SAXOBANK_OAUTH_CLIENT_ID
+      const client_secret = process.env.SAXOBANK_OAUTH_CLIENT_SECRET
+      const auth = btoa(client_id + ':' + client_secret)
+      const payload = {
+        grant_type: 'refresh_token',
+        refresh_token: accessTokenData.refresh_token,
+        redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
+      }
+      const headers = {
+        headers: {
+          Authorization: 'Basic ' + auth,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+      // call axios in async mode
+      axios
+        .post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, headers)
+        .then((response) => {
+          console.log('access_token renewed', response.data.access_token)
+          this.#saveAccessTokenData(dataProvider, opUsername, response.data)
+        })
+        .catch((error) => {})
+    }
+  }
+
+  login(req, res) {
+    let { source } = req.query
+    source = source.toLowerCase()
+    const base64Credentials = req.headers.authorization.split(' ')[1]
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
+    const opUsername = credentials.split(':')[0]
+
+    // send the authorization_url with params to Optuma
+    // Optuma will hit the url
+    const params = new URLSearchParams({
+      response_type: 'code', // Please do not change. It must be 'code'
+      client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
+      state: source + '.' + opUsername,
+      redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
+    })
+    const authFullUrl = process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
+    res.json({ status: 1, auth_url: authFullUrl })
+  }
+
+  authorize(req, res) {
+    let { source } = req.query
+    source = source.toLowerCase()
+    const base64Credentials = req.headers.authorization.split(' ')[1]
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
+    const opUsername = credentials.split(':')[0]
+    const accessTokenFile = './data/' + source + '.' + opUsername + '.dat'
+
+    // file exists?
+    if (fs.existsSync(accessTokenFile)) {
+      res.json({ status: 1, auth_url: 'authorized' })
+    } else {
+      res.json({ status: 0 })
+    }
   }
 
   async lookup(req, res) {

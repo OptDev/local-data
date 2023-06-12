@@ -10,23 +10,26 @@ let ldInterfaces = []
 // read interfaces folder
 fs.readdir('./interfaces', (err, files) => {
   files.forEach((file) => {
-    // import all interfaces
-    const cls = require('./interfaces/' + file + '/index.js')
-    // create an object
-    ldInterfaces[file.toLowerCase()] = new cls()
+    if (!process.env.ENABLED_PROVIDERS || process.env.ENABLED_PROVIDERS.split(',').includes(file)) {
+      // import all interfaces
+      const cls = require('./interfaces/' + file + '/index.js')
+      // create an object
+      ldInterfaces[file.toLowerCase()] = new cls()
+    }
   })
 })
 
+const exceptionEndPoints = ['/api/acb', '/api/login', '/api/authorize']
 const app = express()
-const port = 3000 // or any port number you prefer
+const port = process.env.LOCAL_DATA_PORT
 
 // Middleware to parse JSON requests
 app.use(express.json())
 
 // Middleware for access token data
 const passAccessTokenDataToReq = async function (req, res, next) {
-  // if url-path is /api/acb ( callback url ) then skip
-  if (req.originalUrl.split('?').shift() === '/api/acb') {
+  // Is it an excpetion end point
+  if (exceptionEndPoints.includes(req.originalUrl.split('?').shift())) {
     next()
     return
   }
@@ -43,9 +46,8 @@ const passAccessTokenDataToReq = async function (req, res, next) {
   ////////////////////////////////////////////////////////////////////////////////
   // Please add a provider name here if the provider requires access-token
   ////////////////////////////////////////////////////////////////////////////////
-  const accessTokenRequiredProviders = ['saxobank']
   // does the provider need the access token?
-  if (accessTokenRequiredProviders.includes(source)) {
+  if (process.env.ACCESS_TOKEN_REQUIRED_PROVIDERS.split(',').includes(source)) {
     // authorization is not set
     if (!req.headers.authorization && !tusername) {
       res.status(401).json({ message: 'Unauthorized' })
@@ -84,8 +86,8 @@ app.use(passAccessTokenDataToReq)
 
 // Middleware for 404 ( Not found ) and 501 ( Not Implemented )
 const IsRequestAvailable = function (req, res, next) {
-  // if url-path is /api/acb ( callback url ) then go to next
-  if (req.originalUrl.split('?').shift() === '/api/acb') {
+  // Is it an excpetion end point
+  if (exceptionEndPoints.includes(req.originalUrl.split('?').shift())) {
     next()
     return
   }
@@ -106,70 +108,70 @@ let externalStream // hold the external data stream reference so this can be clo
 /* 
  In custom_providers.yaml. If authenticate value is false, Optuma will not send login or logout request.
 */
-app.post('/api/login', async (req, res) => {
-  try {
-    if (req.headers.authorization) {
-      const base64Credentials = req.headers.authorization.split(' ')[1]
-      const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
-      const [username, password] = credentials.split(':')
-      console.log('login ', username, password)
-    }
+// app.post('/api/login', async (req, res) => {
+//   try {
+//     if (req.headers.authorization) {
+//       const base64Credentials = req.headers.authorization.split(' ')[1]
+//       const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
+//       const [username, password] = credentials.split(':')
+//       console.log('login ', username, password)
+//     }
 
-    // const response = await axios.post('https://external-server.com/login', {
-    //   username,
-    //   password
-    // });
+//     // const response = await axios.post('https://external-server.com/login', {
+//     //   username,
+//     //   password
+//     // });
 
-    var authenticated = true
+//     var authenticated = true
 
-    // Check the response from the external server for successful authentication
-    if (authenticated) {
-      // if (response.data.authenticated) {
-      // If authenticated, you can generate a token or session for the user
+//     // Check the response from the external server for successful authentication
+//     if (authenticated) {
+//       // if (response.data.authenticated) {
+//       // If authenticated, you can generate a token or session for the user
 
-      // Return a success response
-      res.json({ status: '1', message: 'Login successful', token: 'generated_token' })
-    } else {
-      // If authentication failed
-      res.json({ status: '0', message: 'Login error: xxx' })
-    }
-  } catch (error) {
-    // Handle any errors that occurred during the request
-    console.error('Error during login:', error)
-    res.status(500).json({ message: 'Error during login' })
-  }
-})
+//       // Return a success response
+//       res.json({ status: '1', message: 'Login successful', token: 'generated_token' })
+//     } else {
+//       // If authentication failed
+//       res.json({ status: '0', message: 'Login error: xxx' })
+//     }
+//   } catch (error) {
+//     // Handle any errors that occurred during the request
+//     console.error('Error during login:', error)
+//     res.status(500).json({ message: 'Error during login' })
+//   }
+// })
 
 /*
   In custom_providers.yaml. If authenticate value is true.
   Optuma sends logout request when this data provider is disconnected manually or during shutdown.
 */
-app.post('/api/logout', async (req, res) => {
-  try {
-    if (req.headers.authorization) {
-      const base64Credentials = req.headers.authorization.split(' ')[1]
-      const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
-      const [username, password] = credentials.split(':')
-      console.log('logout ', username, password)
-    }
+// app.post('/api/logout', async (req, res) => {
+//   try {
+//     if (req.headers.authorization) {
+//       const base64Credentials = req.headers.authorization.split(' ')[1]
+//       const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
+//       const [username, password] = credentials.split(':')
+//       console.log('logout ', username, password)
+//     }
 
-    var authenticated = true
-    // Check the response from the external server
-    if (authenticated) {
-      // if (response.data.authenticated) {
+//     var authenticated = true
+//     // Check the response from the external server
+//     if (authenticated) {
+//       // if (response.data.authenticated) {
 
-      // Return a success response
-      res.json({ status: '1', message: 'Logout successful', status: 'success' })
-    } else {
-      // If authentication failed
-      res.status(401).json({ message: 'Logout failed' })
-    }
-  } catch (error) {
-    // Handle any errors that occurred during the request
-    console.error('Error during logout:', error)
-    res.status(500).json({ message: 'Error during logout' })
-  }
-})
+//       // Return a success response
+//       res.json({ status: '1', message: 'Logout successful', status: 'success' })
+//     } else {
+//       // If authentication failed
+//       res.status(401).json({ message: 'Logout failed' })
+//     }
+//   } catch (error) {
+//     // Handle any errors that occurred during the request
+//     console.error('Error during logout:', error)
+//     res.status(500).json({ message: 'Error during logout' })
+//   }
+// })
 
 /*
 Optuma sends open_stream get request with a list of live symbols
@@ -204,37 +206,37 @@ type s - snapshot of current day
   Optuma expects to receive one snapshot data point as the first response of the open_stream to build today's bar first. Then the rest of the trade ticks will follow and grows today's bar.
 
 */
-app.get('/api/open_stream', (req, res) => {
-  const { symbols, mics, figis } = req.query
-  console.log('open stream ', symbols, ' ', mics, ' ', figis)
+// app.get('/api/open_stream', (req, res) => {
+//   const { symbols, mics, figis } = req.query
+//   console.log('open stream ', symbols, ' ', mics, ' ', figis)
 
-  // try {
-  //   // Make the GET request to the external server for streaming data
-  //   externalStream = axios.get('https://external-server.com/stream', {
-  //   responseType: 'stream' // Set the response type to stream
-  //   });
-  //
-  // } catch (error) {
-  //   console.error('Error retrieving streaming data:', error);
-  //   res.status(500).json({ message: 'Error retrieving streaming data' });
-  // }
+//   // try {
+//   //   // Make the GET request to the external server for streaming data
+//   //   externalStream = axios.get('https://external-server.com/stream', {
+//   //   responseType: 'stream' // Set the response type to stream
+//   //   });
+//   //
+//   // } catch (error) {
+//   //   console.error('Error retrieving streaming data:', error);
+//   //   res.status(500).json({ message: 'Error retrieving streaming data' });
+//   // }
 
-  // todo - simulation for live data
-  const data = sampleTicks
-  let time = 200
-  for (let index = 0; index < data.length; index++) {
-    let bar = data[index]
-    setTimeout(() => {
-      res.write(JSON.stringify(bar) + '\n')
-    }, time)
-    time += 200
-  }
+//   // todo - simulation for live data
+//   const data = sampleTicks
+//   let time = 200
+//   for (let index = 0; index < data.length; index++) {
+//     let bar = data[index]
+//     setTimeout(() => {
+//       res.write(JSON.stringify(bar) + '\n')
+//     }, time)
+//     time += 200
+//   }
 
-  // for a continuous live data stream, res.end() might or might not be needed.
-  setTimeout(() => {
-    res.end()
-  }, time)
-})
+//   // for a continuous live data stream, res.end() might or might not be needed.
+//   setTimeout(() => {
+//     res.end()
+//   }, time)
+// })
 
 /*
   close_stream provides a way to manage the stream resources.
@@ -243,28 +245,28 @@ app.get('/api/open_stream', (req, res) => {
   It waits until there is a new code request. Then it kills the previous open_stream request and 
   recreate a new open_stream with a new list of open codes.
 */
-app.get('/api/close_stream', async (req, res) => {
-  try {
-    const { symbol, mic, figi } = req.query
+// app.get('/api/close_stream', async (req, res) => {
+//   try {
+//     const { symbol, mic, figi } = req.query
 
-    console.log('close_stream ', symbol, ' ', mic, ' ', figi)
+//     console.log('close_stream ', symbol, ' ', mic, ' ', figi)
 
-    // the following codes are for demo only
-    externalStream = true
-    if (externalStream) {
-      // Close the stream by canceling the request
-      // externalStream.cancel()
-      externalStream = null
+//     // the following codes are for demo only
+//     externalStream = true
+//     if (externalStream) {
+//       // Close the stream by canceling the request
+//       // externalStream.cancel()
+//       externalStream = null
 
-      res.json({ status: 1, message: 'Stream closed successfully' })
-    } else {
-      res.json({ status: 0, message: 'No active stream to close' })
-    }
-  } catch (error) {
-    console.error('Error closing stream:', error)
-    res.status(500).json({ message: 'Error closing stream' })
-  }
-})
+//       res.json({ status: 1, message: 'Stream closed successfully' })
+//     } else {
+//       res.json({ status: 0, message: 'No active stream to close' })
+//     }
+//   } catch (error) {
+//     console.error('Error closing stream:', error)
+//     res.status(500).json({ message: 'Error closing stream' })
+//   }
+// })
 
 /*
   get_history request is being sent first when open a chart.
@@ -276,41 +278,41 @@ app.get('/api/close_stream', async (req, res) => {
   Optuma is able to process each response separately and reflect on the chart.
   symbol in req.query is the unique code that is used to match the source of the request
 */
-app.get('/api/get_history', async (req, res) => {
-  try {
-    const { symbol, mic, figi, timeframe } = req.query
-    // const response = await axios.get('https://external-server.com/history', {
-    //   code, mic, figi, handle, timeframe
-    // });
+// app.get('/api/get_history', async (req, res) => {
+//   try {
+//     const { symbol, mic, figi, timeframe } = req.query
+//     // const response = await axios.get('https://external-server.com/history', {
+//     //   code, mic, figi, handle, timeframe
+//     // });
 
-    // construct the data response
-    // sampleDaily consists an array of history bars
-    // format of each bar
-    // {
-    //   "datetime": "2013-01-04",
-    //   "open": 63.07,
-    //   "high": 63.08,
-    //   "low": 62.74,
-    //   "close": 62.98,
-    //   "volume": 1650767,
-    //   "oi": 0
-    // },
+//     // construct the data response
+//     // sampleDaily consists an array of history bars
+//     // format of each bar
+//     // {
+//     //   "datetime": "2013-01-04",
+//     //   "open": 63.07,
+//     //   "high": 63.08,
+//     //   "low": 62.74,
+//     //   "close": 62.98,
+//     //   "volume": 1650767,
+//     //   "oi": 0
+//     // },
 
-    var data = {
-      status: 1,
-      last_data_set: 1, // to tell this is the last response,
-      symbol: symbol,
-      bars: sampleDaily,
-    }
+//     var data = {
+//       status: 1,
+//       last_data_set: 1, // to tell this is the last response,
+//       symbol: symbol,
+//       bars: sampleDaily,
+//     }
 
-    // Return the history data
-    res.json(data)
-  } catch (error) {
-    // Handle any errors that occurred during the request
-    console.error('Error retrieving history from external API:', error)
-    res.status(500).json({ message: 'Error retrieving history data' })
-  }
-})
+//     // Return the history data
+//     res.json(data)
+//   } catch (error) {
+//     // Handle any errors that occurred during the request
+//     console.error('Error retrieving history from external API:', error)
+//     res.status(500).json({ message: 'Error retrieving history data' })
+//   }
+// })
 
 /*
   search_ticker request is sent from the Search By Code dialog in Optuma.
@@ -323,43 +325,43 @@ app.get('/api/get_history', async (req, res) => {
   type in the req.query is an integer, which is the index of the search types provided in custom_provider.yaml file.
 
 */
-app.get('/api/search_ticker', (req, res) => {
-  try {
-    const { search, type } = req.query
+// app.get('/api/search_ticker', (req, res) => {
+//   try {
+//     const { search, type } = req.query
 
-    // const response = await axios.get('https://external-server.com/search', {
-    //   search
-    // });
+//     // const response = await axios.get('https://external-server.com/search', {
+//     //   search
+//     // });
 
-    // construct the search result
-    const listOfCodes = {
-      status: 1,
-      datasets: [
-        {
-          code: 'CBA',
-          symbol: 'CBA',
-          description: 'Commonwealth Bank of Australia',
-          exchange: 'ASX',
-          assetType: 'equity',
-        },
-        {
-          code: 'ANZ',
-          symbol: 'ANZ',
-          description: 'Australia and New Zealand Bank',
-          exchange: 'ASX',
-          assetType: 'equity',
-        },
-      ],
-    }
+//     // construct the search result
+//     const listOfCodes = {
+//       status: 1,
+//       datasets: [
+//         {
+//           code: 'CBA',
+//           symbol: 'CBA',
+//           description: 'Commonwealth Bank of Australia',
+//           exchange: 'ASX',
+//           assetType: 'equity',
+//         },
+//         {
+//           code: 'ANZ',
+//           symbol: 'ANZ',
+//           description: 'Australia and New Zealand Bank',
+//           exchange: 'ASX',
+//           assetType: 'equity',
+//         },
+//       ],
+//     }
 
-    // Return the processed data as the API response
-    res.json(listOfCodes)
-  } catch (error) {
-    // Handle any errors that occurred during the request
-    console.error('Error retrieving data from external search ticker API:', error)
-    res.status(500).json({ message: 'Error retrieving search ticker data' })
-  }
-})
+//     // Return the processed data as the API response
+//     res.json(listOfCodes)
+//   } catch (error) {
+//     // Handle any errors that occurred during the request
+//     console.error('Error retrieving data from external search ticker API:', error)
+//     res.status(500).json({ message: 'Error retrieving search ticker data' })
+//   }
+// })
 
 /* 
   callback url for an application of provider
@@ -370,6 +372,22 @@ app.get('/api/acb', (req, res) => {
   const { state } = req.query
   const [source, optumaClientId] = state.split('.')
   ldInterfaces[source.toLowerCase()].getAccessTokenDataFromProvider(req, res)
+})
+
+/*
+  login : if privider uses oauth then it will return AUTHENTICATION_URL
+*/
+app.post('/api/login', (req, res) => {
+  const { source } = req.query
+  ldInterfaces[source.toLowerCase()].login(req, res)
+})
+
+/*
+  check if oauth is authorized or not
+*/
+app.get('/api/authorize', (req, res) => {
+  const { source } = req.query
+  ldInterfaces[source.toLowerCase()].authorize(req, res)
 })
 
 /* 
@@ -408,3 +426,16 @@ app.get('/api/history', (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`)
 })
+
+// refresh access-token for all clients every 10 minutes
+// hopefully all provider's refresh_token_expires_in is longer then 10 minutes
+setInterval(() => {
+  fs.readdir('./data', (err, files) => {
+    files.forEach((file) => {
+      const [source, opUsername] = file.split('.')
+      if (process.env.ACCESS_TOKEN_REQUIRED_PROVIDERS.split(',').includes(source.toLowerCase())) {
+        ldInterfaces[source.toLowerCase()].refreshAccessToken(file, source.toLowerCase(), opUsername)
+      }
+    })
+  })
+}, 1000 * 60 * 10)
