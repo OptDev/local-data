@@ -2,12 +2,104 @@ const express = require('express')
 const axios = require('axios')
 const sampleDaily = require('./data/AAA.json')
 const sampleTicks = require('./data/sampleTicks.json')
+const fs = require('fs')
+require('dotenv').config()
+
+// variable for interfaces of local-data
+let ldInterfaces = []
+// read interfaces folder
+fs.readdir('./interfaces', (err, files) => {
+  files.forEach((file) => {
+    // import all interfaces
+    const cls = require('./interfaces/' + file + '/index.js')
+    // create an object
+    ldInterfaces[file.toLowerCase()] = new cls()
+  })
+})
 
 const app = express()
 const port = 3000 // or any port number you prefer
 
 // Middleware to parse JSON requests
 app.use(express.json())
+
+// Middleware for access token data
+const passAccessTokenDataToReq = async function (req, res, next) {
+  // if url-path is /api/acb ( callback url ) then skip
+  if (req.originalUrl.split('?').shift() === '/api/acb') {
+    next()
+    return
+  }
+
+  let { source, tusername } = req.query
+  // if source is not set then ignore the request ( ex) /favicon.ico )
+  if (!source) {
+    return
+  }
+  // change source to lower case
+  source = source.toLowerCase()
+
+  let opUsername
+  ////////////////////////////////////////////////////////////////////////////////
+  // Please add a provider name here if the provider requires access-token
+  ////////////////////////////////////////////////////////////////////////////////
+  const accessTokenRequiredProviders = ['saxobank']
+  // does the provider need the access token?
+  if (accessTokenRequiredProviders.includes(source)) {
+    // authorization is not set
+    if (!req.headers.authorization && !tusername) {
+      res.status(401).json({ message: 'Unauthorized' })
+      return
+    }
+
+    if (tusername) {
+      // Is the test username set?
+      opUsername = tusername
+    } else {
+      // username : Optuma Username
+      // password : null
+      const base64Credentials = req.headers.authorization.split(' ')[1]
+      const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
+      opUsername = credentials.split(':')[0]
+    }
+
+    const accessTokenData = await ldInterfaces[source].getAccessTokenDataFromLocal(source, opUsername)
+    // access_token not available ( expired or not eixst )
+    if (!accessTokenData.access_token && accessTokenData.status === '0') {
+      // accessTokenData is an error json here
+      // accessTokenData.errordesc is the authorization full url
+      res.json(accessTokenData)
+      return
+    }
+
+    // pass accessTokenData to req
+    req.accessTokenData = accessTokenData
+    // pass username to req
+    req.opUsername = opUsername
+  }
+
+  next()
+}
+app.use(passAccessTokenDataToReq)
+
+// Middleware for 404 ( Not found ) and 501 ( Not Implemented )
+const IsRequestAvailable = function (req, res, next) {
+  // if url-path is /api/acb ( callback url ) then go to next
+  if (req.originalUrl.split('?').shift() === '/api/acb') {
+    next()
+    return
+  }
+
+  const { source } = req.query
+
+  if (!ldInterfaces[source.toLowerCase()]) {
+    res.status(404).json({ message: 'Data Provider not found' })
+    return
+  }
+
+  next()
+}
+app.use(IsRequestAvailable)
 
 let externalStream // hold the external data stream reference so this can be closed / cancelled in close_stream
 
@@ -267,6 +359,49 @@ app.get('/api/search_ticker', (req, res) => {
     console.error('Error retrieving data from external search ticker API:', error)
     res.status(500).json({ message: 'Error retrieving search ticker data' })
   }
+})
+
+/* 
+  callback url for an application of provider
+  get access_token from code ( it is in url parameter )
+  ex) http://localhost:3000/api/acb
+*/
+app.get('/api/acb', (req, res) => {
+  const { state } = req.query
+  const [source, optumaClientId] = state.split('.')
+  ldInterfaces[source.toLowerCase()].getAccessTokenDataFromProvider(req, res)
+})
+
+/* 
+  open streaming
+*/
+app.get('/api/quotes', async (req, res) => {
+  const { source } = req.query
+  ldInterfaces[source.toLowerCase()].openStream(req, res)
+})
+
+/* 
+  close streaming
+*/
+app.delete('/api/quotes', async (req, res) => {
+  const { source } = req.query
+  ldInterfaces[source.toLowerCase()].closeStream(req, res)
+})
+
+/* 
+  lookup
+*/
+app.get('/api/lookup', (req, res) => {
+  const { source } = req.query
+  ldInterfaces[source.toLowerCase()].lookup(req, res)
+})
+
+/* 
+  history
+*/
+app.get('/api/history', (req, res) => {
+  const { source } = req.query
+  ldInterfaces[source.toLowerCase()].history(req, res)
 })
 
 // Start the server
