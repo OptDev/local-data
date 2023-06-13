@@ -267,6 +267,8 @@ class SaxoBank {
           type: response.data.Data[i].AssetType,
           description: response.data.Data[i].Description,
           code: response.data.Data[i].Symbol,
+          currency: response.data.Data[i].CurrencyCode,
+          country: response.data.Data[i].IssuerCountry,
         })
       }
 
@@ -280,6 +282,8 @@ class SaxoBank {
             type: response.data.Data[i].AssetType,
             description: response.data.Data[i].Description,
             code: response.data.Data[i].Symbol,
+            currency: response.data.Data[i].CurrencyCode,
+            country: response.data.Data[i].IssuerCountry,
           })
         }
       }
