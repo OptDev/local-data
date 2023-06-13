@@ -279,6 +279,7 @@ class SaxoBank {
             exchange: response.data.Data[i].ExchangeId,
             type: response.data.Data[i].AssetType,
             description: response.data.Data[i].Description,
+            code: response.data.Data[i].Symbol,
           })
         }
       }
@@ -412,6 +413,8 @@ class SaxoBank {
     if (connection) {
       connections[contextId].onclose = (event) => {
         this.#handleSocketClose(event)
+        delete referenceIds[contextId]
+        delete connections[contextId]
         res.end()
       }
       connections[contextId].onerror = (event) => {
@@ -434,23 +437,60 @@ class SaxoBank {
     if (!referenceIds[contextId].length) {
       message = 'stream closed'
       this.#closeSocket(contextId)
-      delete referenceIds[contextId]
-      delete connections[contextId]
     }
     res.status(200).json({ message: message })
   }
 
-  #getSymbolFromCode(code, type) {
+  async #getSymbolFromCode(accessToken, code, type) {
     // if it exists in codeSymbolMaps then get it from codeSymbolMaps
     if (codeSymbolMaps[code]) {
       return codeSymbolMaps[code]
     }
 
     // try to lookup
+    const params = new URLSearchParams({
+      AssetTypes: '',
+      Keywords: code.split(':')[0],
+    })
+    const url = process.env.SAXOBANK_API_BASE_URL + '/ref/v1/instruments/?' + params.toString()
+    const config = {
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    }
+
+    const response = await axios.get(url, config)
+    // example of response.data.Data[]
+    // {
+    //   AssetType: 'CfdOnStock',
+    //   CurrencyCode: 'USD',
+    //   Description: 'Apple Inc.',
+    //   ExchangeId: 'NASDAQ',
+    //   GroupId: 76,
+    //   Identifier: 211,
+    //   IssuerCountry: 'US',
+    //   PrimaryListing: 211,
+    //   SummaryType: 'Instrument',
+    //   Symbol: 'AAPL:xnas',
+    //   TradableAs: [ 'CfdOnStock' ]
+    // }
+    for (let i = 0; i < response.data.Data.length; i++) {
+      if (code.split(':')[0].toLowerCase() === response.data.Data[i].Symbol.split(':')[0].toLowerCase()) {
+        codeSymbolMaps[code] = { symbol: response.data.Data[i].Identifier, type: response.data.Data[i].AssetType }
+        return codeSymbolMaps[code]
+      }
+    }
   }
 
   async #unsubscribeTradePrices(req, res, contextId) {
-    const { type, symbol } = req.query
+    let { type, symbol, code } = req.query
+    // if symbol is null then get it from code
+    if (!symbol) {
+      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, code, type)
+      symbol = map.symbol
+      type = map.type
+    }
     const referenceId = this.#getReferenceId(req.opUsername, type, symbol)
 
     if (referenceIds[contextId]) {
@@ -489,14 +529,20 @@ class SaxoBank {
     }
   }
 
-  #subscribeTradePrices(req, res, contextId) {
+  async #subscribeTradePrices(req, res, contextId) {
     let { instruments } = req.query
     instruments = JSON.parse(atob(instruments))
 
     for (let i = 0; i < instruments.length; i++) {
       // if symbol is null then get it from code
       if (!instruments[i].symbol) {
-        this.#getSymbolFromCode(instruments[i].code, instruments[i].type)
+        const map = await this.#getSymbolFromCode(
+          req.accessTokenData.access_token,
+          instruments[i].code,
+          instruments[i].type
+        )
+        instruments[i].symbol = map.symbol
+        instruments[i].type = map.type
       }
 
       // instruments[i].code
