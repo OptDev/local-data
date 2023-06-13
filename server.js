@@ -10,7 +10,7 @@ let ldInterfaces = []
 // read interfaces folder
 fs.readdir('./interfaces', (err, files) => {
   files.forEach((file) => {
-    if (!process.env.ENABLED_PROVIDERS || process.env.ENABLED_PROVIDERS.split(',').includes(file)) {
+    if (!process.env.ENABLED_PROVIDERS || process.env.ENABLED_PROVIDERS.split(',').includes(file.toLowerCase())) {
       // import all interfaces
       const cls = require('./interfaces/' + file + '/index.js')
       // create an object

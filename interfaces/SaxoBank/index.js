@@ -31,6 +31,8 @@ https://saxobank.github.io/openapi-samples-js/websockets/realtime-quotes/
 
 // streaming connections
 var connections = []
+var referenceIds = []
+var codeSymbolMaps = []
 
 class SaxoBank {
   getAccessTokenDataFromProvider(req, res) {
@@ -64,43 +66,61 @@ class SaxoBank {
   }
 
   async getAccessTokenDataFromLocal(dataProvider, opUsername) {
-    const currentTime = Math.round(Date.now() / 1000)
-    const accessTokenFile = './data/' + dataProvider + '.' + opUsername + '.dat'
-    let accessTokenData = null
-
-    // file exists?
-    if (fs.existsSync(accessTokenFile)) {
-      // read file and parse
-      accessTokenData = JSON.parse(fs.readFileSync(accessTokenFile, 'utf8'))
-      // access_token is available ( not expired )
-      if (accessTokenData.expiry > currentTime) {
-        return accessTokenData
-      } else if (accessTokenData.refresh_token_expiry > currentTime) {
-        // access_token is expired but refresh_token is not expired
-        // get access_token from refresh_token
-        accessTokenData = await this.#getAccessTokenFromRefreshToken(accessTokenData.refresh_token)
-        if (accessTokenData !== false) {
-          // add expiry and refresh_token_expiry for handy
-          this.#saveAccessTokenData(dataProvider, opUsername, accessTokenData)
-          return accessTokenData
-        }
+    const expired = this.#accessTokenExpired(dataProvider, opUsername)
+    let accessTokenData
+    // token expired?
+    if (expired === true) {
+      // send the authorization_url with params to Optuma
+      // Optuma will hit the url
+      const params = new URLSearchParams({
+        response_type: 'code', // Please do not change. It must be 'code'
+        client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
+        state: dataProvider + '.' + opUsername,
+        redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
+      })
+      const authFullUrl = process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
+      return {
+        status: '0',
+        errorcode: '990',
+        errordesc: authFullUrl,
       }
     }
 
-    // send the authorization_url with params to Optuma
-    // Optuma will hit the url
-    const params = new URLSearchParams({
-      response_type: 'code', // Please do not change. It must be 'code'
-      client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
-      state: dataProvider + '.' + opUsername,
-      redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
-    })
-    const authFullUrl = process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
-    return {
-      status: '0',
-      errorcode: '990',
-      errordesc: authFullUrl,
+    const currentTime = Math.round(Date.now() / 1000)
+    // #accessTokenExpired returns accessTokenData if it is not expired
+    accessTokenData = expired
+    // access_token is available ( not expired )
+    if (accessTokenData.expiry > currentTime) {
+      return accessTokenData
+    } else if (accessTokenData.refresh_token_expiry > currentTime) {
+      // access_token is expired but refresh_token is not expired
+      // get access_token from refresh_token
+      accessTokenData = await this.#getAccessTokenFromRefreshToken(accessTokenData.refresh_token)
+      if (accessTokenData !== false) {
+        // add expiry and refresh_token_expiry for handy
+        this.#saveAccessTokenData(dataProvider, opUsername, accessTokenData)
+        return accessTokenData
+      }
     }
+  }
+
+  #accessTokenExpired(dataProvider, opUsername) {
+    const currentTime = Math.round(Date.now() / 1000)
+    const accessTokenFile = './data/' + dataProvider + '.' + opUsername + '.dat'
+
+    if (fs.existsSync(accessTokenFile)) {
+      // read file and parse
+      const accessTokenData = JSON.parse(fs.readFileSync(accessTokenFile, 'utf8'))
+      // access_token or refresh_token are not expired yet
+      if (accessTokenData.expiry > currentTime || accessTokenData.refresh_token_expiry > currentTime) {
+        return accessTokenData
+      }
+
+      // if access_token is expired then delete the file
+      fs.unlinkSync(accessTokenFile)
+    }
+
+    return true
   }
 
   async #getAccessTokenFromRefreshToken(refreshToken) {
@@ -174,16 +194,21 @@ class SaxoBank {
     const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
     const opUsername = credentials.split(':')[0]
 
-    // send the authorization_url with params to Optuma
-    // Optuma will hit the url
-    const params = new URLSearchParams({
-      response_type: 'code', // Please do not change. It must be 'code'
-      client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
-      state: source + '.' + opUsername,
-      redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
-    })
-    const authFullUrl = process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
-    res.json({ status: 1, auth_url: authFullUrl })
+    const expired = this.#accessTokenExpired(source, opUsername)
+    if (expired === true) {
+      // send the authorization_url with params to Optuma
+      // Optuma will hit the url
+      const params = new URLSearchParams({
+        response_type: 'code', // Please do not change. It must be 'code'
+        client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
+        state: source + '.' + opUsername,
+        redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
+      })
+      const authFullUrl = process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
+      res.json({ status: 1, auth_url: authFullUrl })
+    } else {
+      res.json({ status: 1, auth_url: 'authorized' })
+    }
   }
 
   authorize(req, res) {
@@ -368,17 +393,23 @@ class SaxoBank {
 
   openStream(req, res) {
     const contextId = this.#getContextId(req)
+    let connection
 
-    // create WebSocket connection
-    const connection = this.#createConnection(req.accessTokenData.access_token, contextId)
-    if (connection !== false) {
+    if (!connections[contextId]) {
+      // create WebSocket connection
+      connection = this.#createConnection(req.accessTokenData.access_token, contextId)
       connections[contextId] = connection
-      // start listener
+      referenceIds[contextId] = []
       connections[contextId].onopen = () => {
         this.#handleSocketOpen()
-        // this.#subscribeChartCharts(req, res, contextId)
         this.#subscribeTradePrices(req, res, contextId)
       }
+    } else {
+      connection = connections[contextId]
+      this.#subscribeTradePrices(req, res, contextId)
+    }
+
+    if (connection) {
       connections[contextId].onclose = (event) => {
         this.#handleSocketClose(event)
         res.end()
@@ -395,47 +426,58 @@ class SaxoBank {
   }
 
   async closeStream(req, res) {
+    let message = 'unsubscribed'
     const contextId = this.#getContextId(req)
-    // await this.#unsubscribeChartCharts(req, res, contextId)
-    await this.#unsubscribeTradePrices(req, res, contextId)
-    this.#closeSocket(contextId)
-    res.status(200).json({ message: 'close stream' })
+    if (referenceIds[contextId].length) {
+      await this.#unsubscribeTradePrices(req, res, contextId)
+    }
+    if (!referenceIds[contextId].length) {
+      message = 'stream closed'
+      this.#closeSocket(contextId)
+      delete referenceIds[contextId]
+      delete connections[contextId]
+    }
+    res.status(200).json({ message: message })
   }
 
-  async #unsubscribeChartCharts(req, res, contextId) {
-    const referenceId = 'ref-cc-' + contextId
-    const url = process.env.SAXOBANK_API_BASE_URL + '/chart/v1/charts/subscriptions/' + contextId + '/' + referenceId
-    const config = {
-      headers: {
-        Authorization: 'Bearer ' + req.accessTokenData.access_token,
-      },
+  #getSymbolFromCode(code, type) {
+    // if it exists in codeSymbolMaps then get it from codeSymbolMaps
+    if (codeSymbolMaps[code]) {
+      return codeSymbolMaps[code]
     }
-    await axios
-      .delete(url, config)
-      .then((res) => {
-        console.log('Unsubscribed /chart/v1/charts')
-      })
-      .catch((err) => {
-        // console.log('unsubscribe.err', err.response.data)
-      })
+
+    // try to lookup
   }
 
   async #unsubscribeTradePrices(req, res, contextId) {
-    const referenceId = 'ref-tp-' + contextId
-    const url = process.env.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions/' + contextId + '/' + referenceId
-    const config = {
-      headers: {
-        Authorization: 'Bearer ' + req.accessTokenData.access_token,
-      },
+    const { type, symbol } = req.query
+    const referenceId = this.#getReferenceId(req.opUsername, type, symbol)
+
+    if (referenceIds[contextId]) {
+      // Find the index of the element
+      const index = referenceIds[contextId].indexOf(referenceId)
+      if (index !== -1) {
+        // Remove the element from the array
+        referenceIds[contextId].splice(index, 1)
+
+        // unsubscribe
+        const url =
+          process.env.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions/' + contextId + '/' + referenceId
+        const config = {
+          headers: {
+            Authorization: 'Bearer ' + req.accessTokenData.access_token,
+          },
+        }
+        await axios
+          .delete(url, config)
+          .then((res) => {
+            console.log('Unsubscribe ' + symbol)
+          })
+          .catch((err) => {
+            // console.log(error.response.data)
+          })
+      }
     }
-    await axios
-      .delete(url, config)
-      .then((res) => {
-        console.log('Unsubscribed /trade/v1/prices')
-      })
-      .catch((err) => {
-        // console.log('unsubscribe.err', err.response.data)
-      })
   }
 
   #closeSocket(contextId) {
@@ -447,59 +489,46 @@ class SaxoBank {
     }
   }
 
-  #subscribeChartCharts(req, res, contextId) {
-    const { symbol, period, type, source } = req.query
-    const url = process.env.SAXOBANK_API_BASE_URL + '/chart/v1/charts/subscriptions'
-    const payload = {
-      Arguments: {
-        AssetType: type,
-        Horizon: this.#getHorizonFromPeriod(period),
-        Uic: symbol,
-      },
-      ContextId: contextId,
-      ReferenceId: 'ref-cc-' + contextId,
-    }
-    const config = {
-      headers: {
-        Authorization: 'Bearer ' + req.accessTokenData.access_token,
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-    }
-    axios
-      .post(url, payload, config)
-      .then((response) => {
-        console.log(response.data)
-      })
-      .catch((error) => {
-        console.log(error.response.data)
-      })
-  }
-
   #subscribeTradePrices(req, res, contextId) {
-    const { symbol, period, type, source } = req.query
-    const url = process.env.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions'
-    const payload = {
-      Arguments: {
-        AssetType: type,
-        Uic: symbol,
-      },
-      ContextId: contextId,
-      ReferenceId: 'ref-tp-' + contextId,
+    let { instruments } = req.query
+    instruments = JSON.parse(atob(instruments))
+
+    for (let i = 0; i < instruments.length; i++) {
+      // if symbol is null then get it from code
+      if (!instruments[i].symbol) {
+        this.#getSymbolFromCode(instruments[i].code, instruments[i].type)
+      }
+
+      // instruments[i].code
+      // instruments[i].symbol
+      // instruments[i].exchange
+      // instruments[i].type
+      const referenceId = this.#getReferenceId(req.opUsername, instruments[i].type, instruments[i].symbol)
+      referenceIds[contextId].push(referenceId)
+      const url = process.env.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions'
+      const payload = {
+        Arguments: {
+          AssetType: instruments[i].type,
+          Uic: instruments[i].symbol,
+        },
+        ContextId: contextId,
+        ReferenceId: referenceId, // 'ref-tp-' + contextId,
+      }
+      const config = {
+        headers: {
+          Authorization: 'Bearer ' + req.accessTokenData.access_token,
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+      }
+      axios
+        .post(url, payload, config)
+        .then((response) => {
+          console.log('Subscribe ' + instruments[i].symbol)
+        })
+        .catch((error) => {
+          // console.log(error.response.data)
+        })
     }
-    const config = {
-      headers: {
-        Authorization: 'Bearer ' + req.accessTokenData.access_token,
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-    }
-    axios
-      .post(url, payload, config)
-      .then((response) => {
-        console.log(response.data)
-      })
-      .catch((error) => {
-        console.log(error.response.data)
-      })
   }
 
   #handleSocketOpen() {
@@ -542,100 +571,76 @@ class SaxoBank {
     messages.forEach(
       function (message, i) {
         switch (message.referenceId) {
-          case 'ref-cc-' + contextId:
-            // res.write('[chart/v1/charts/subscriptions]\r\n')
-            // res.write(JSON.stringify(message.payload, null, 4) + '\r\n')
-            // for (let i = 0; i < message.payload.length; i++) {
-            //   const ret = {
-            //     status: 1,
-            //     symbol: req.symbol,
-            //     datetime: message.payload[i].Time,
-            //     open: message.payload[i].OpenBid,
-            //     high: message.payload[i].HighBid,
-            //     low: message.payload[i].LowAsk,
-            //     close: message.payload[i].CloseBid,
-            //     type: 'q',
-            //   }
-            //   res.write(JSON.stringify(ret, null, 4))
-            // }
-            // res.flush()
-            break
-          case 'ref-tp-' + contextId:
-            // Quote exists
-            if (message.payload.Quote) {
-              let ret = {}
-              ret.status = 1
-              ret.symbo = req.symbol
-              ret.datetime = this.#getYmdHis(message.payload.LastUpdated)
-              if (message.payload.Quote.Bid) ret.bid = message.payload.Quote.Bid
-              if (message.payload.Quote.Ask) ret.ask = message.payload.Quote.Ask
-              if (message.payload.Quote.BidSize) ret.bidsize = message.payload.Quote.BidSize
-              if (message.payload.Quote.AskSize) ret.asksize = message.payload.Quote.AskSize
-              ret.type = 'q'
-              // req.query.nl is for test in a browser.
-              res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
-            }
-            // PriceInfoDetails exists
-            if (message.payload.PriceInfoDetails) {
-              let ret = {}
-              ret.status = 1
-              ret.symbo = req.symbol
-              ret.datetime = this.#getYmdHis(message.payload.LastUpdated)
-              if (message.payload.PriceInfoDetails.LastTraded) ret.close = message.payload.PriceInfoDetails.LastTraded
-              if (message.payload.PriceInfoDetails.LastTradedSize)
-                ret.size = message.payload.PriceInfoDetails.LastTradedSize
-              if (message.payload.PriceInfoDetails.Volume) ret.volume = message.payload.PriceInfoDetails.Volume
-              ret.type = 't'
-              res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
-            }
-            // PriceInfoDetails and PriceInfo exist
-            if (message.payload.PriceInfoDetails && message.payload.PriceInfo) {
-              let ret = {}
-              ret.status = 1
-              ret.symbo = req.symbol
-              ret.datetime = this.#getYmdHis(message.payload.LastUpdated)
-              if (message.payload.PriceInfoDetails.Open) ret.open = message.payload.PriceInfoDetails.Open
-              if (message.payload.PriceInfoDetails.LastClose) ret.close = message.payload.PriceInfoDetails.LastClose
-              if (message.payload.PriceInfo.High) ret.high = message.payload.PriceInfo.High
-              if (message.payload.PriceInfo.Low) ret.low = message.payload.PriceInfo.Low
-              ret.type = 's'
-              res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
-            }
-            break
           case '_heartbeat':
             res.write(JSON.stringify({ status: 1, heartbeat: 1 }) + (req.query.nl ? '\r\n' : ''))
             // // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
             // handleHeartbeat(message.messageId, message.payload)
             break
           case '_resetsubscriptions':
+            // make referenceIds[contextId] empty to close WebSocket
+            referenceIds[contextId] = []
             // close stream
             this.closeStream(req, res)
-
-            // // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
-            // // The server is not able to send messages and client needs to reset subscriptions by recreating them.
-            // console.error(
-            //   'Reset Subscription Control message received! Reset your subscriptions by recreating them.\n\n' +
-            //     JSON.stringify(message.payload, null, 4)
-            // )
-            // recreateSubscriptions() // When the TargetReferenceIds array contains elements, this can be done in a more efficient way, by only resubscribing to the referenced subscriptions.
             break
           case '_disconnect':
+            // make referenceIds[contextId] empty to close WebSocket
+            referenceIds[contextId] = []
             // close stream
             this.closeStream(req, res)
-
-            // // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
-            // // The server has disconnected the client. This messages requires you to re-authenticate if you wish to continue receiving messages.
-            // console.error(
-            //   'The server has disconnected the client! New login is required.\n\n' +
-            //     JSON.stringify(message.payload, null, 4)
-            // )
             break
           default:
-            console.log('Unknown referenceId = ' + message.referenceId)
+            if (referenceIds[contextId].includes(message.referenceId)) {
+              this.#writeStreamingData(req, res, message)
+            } else {
+              console.log('Unknown referenceId = ' + message.referenceId)
+            }
             break
         }
       }.bind(this)
     )
+  }
+
+  #writeStreamingData(req, res, message) {
+    const symbol = message.referenceId.split('-')[0]
+    // Quote exists
+    if (message.payload.Quote) {
+      const ret = {}
+      ret.status = 1
+      ret.symbol = symbol
+      ret.datetime = this.#getYmdHis(message.payload.LastUpdated)
+      if (message.payload.Quote.Bid) ret.bid = message.payload.Quote.Bid
+      if (message.payload.Quote.Ask) ret.ask = message.payload.Quote.Ask
+      if (message.payload.Quote.BidSize) ret.bidsize = message.payload.Quote.BidSize
+      if (message.payload.Quote.AskSize) ret.asksize = message.payload.Quote.AskSize
+      ret.type = 'q'
+      // req.query.nl is for test in a browser.
+      res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
+    }
+    // PriceInfoDetails exists
+    if (message.payload.PriceInfoDetails) {
+      const ret = {}
+      ret.status = 1
+      ret.symbol = symbol
+      ret.datetime = this.#getYmdHis(message.payload.LastUpdated)
+      if (message.payload.PriceInfoDetails.LastTraded) ret.close = message.payload.PriceInfoDetails.LastTraded
+      if (message.payload.PriceInfoDetails.LastTradedSize) ret.size = message.payload.PriceInfoDetails.LastTradedSize
+      if (message.payload.PriceInfoDetails.Volume) ret.volume = message.payload.PriceInfoDetails.Volume
+      ret.type = 't'
+      res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
+    }
+    // PriceInfoDetails and PriceInfo exist
+    if (message.payload.PriceInfoDetails && message.payload.PriceInfo) {
+      const ret = {}
+      ret.status = 1
+      ret.symbol = symbol
+      ret.datetime = this.#getYmdHis(message.payload.LastUpdated)
+      if (message.payload.PriceInfoDetails.Open) ret.open = message.payload.PriceInfoDetails.Open
+      if (message.payload.PriceInfoDetails.LastClose) ret.close = message.payload.PriceInfoDetails.LastClose
+      if (message.payload.PriceInfo.High) ret.high = message.payload.PriceInfo.High
+      if (message.payload.PriceInfo.Low) ret.low = message.payload.PriceInfo.Low
+      ret.type = 's'
+      res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
+    }
   }
 
   /**
@@ -783,9 +788,13 @@ class SaxoBank {
   }
 
   #getContextId(req) {
-    const { symbol, period, type, source } = req.query
-    const contextId = CryptoJS.MD5(source + '.' + req.opUsername + '.' + type + '.' + symbol).toString()
+    const contextId = CryptoJS.MD5(req.opUsername).toString()
     return contextId
+  }
+
+  #getReferenceId(opUsername, type, uic) {
+    const referenceId = uic + '-' + CryptoJS.MD5(opUsername + '.' + type + '.' + uic).toString()
+    return referenceId
   }
 
   #getYmdHis(dateString) {
