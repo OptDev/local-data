@@ -296,6 +296,73 @@ class SaxoBank {
     res.json({ status: 1, datasets: instruments })
   }
 
+  lookupOptions(req, res) {
+    const searchbys = ['Search by code & name']
+    const assetTypes = [
+      '',
+      'Bond',
+      'Cash',
+      'CBBCCategoryN',
+      'CBBCCategoryR',
+      'CertificateBonus',
+      'CertificateCappedBonus',
+      'CertificateCappedCapitalProtected',
+      'CertificateCappedOutperformance',
+      'CertificateConstantLeverage',
+      'CertificateDiscount',
+      'CertificateExpress',
+      'CertificateTracker',
+      'CertificateUncappedCapitalProtection',
+      'CertificateUncappedOutperformance',
+      'CfdIndexOption',
+      'CfdOnCompanyWarrant',
+      'CfdOnEtc',
+      'CfdOnEtf',
+      'CfdOnEtn',
+      'CfdOnFund',
+      'CfdOnFutures',
+      'CfdOnIndex',
+      'CfdOnRights',
+      'CfdOnStock',
+      'CompanyWarrant',
+      'ContractFutures',
+      'Etc',
+      'Etf',
+      'Etn',
+      'Fund',
+      'FuturesOption',
+      'FuturesStrategy',
+      'FxBinaryOption',
+      'FxForwards',
+      'FxKnockInOption',
+      'FxKnockOutOption',
+      'FxNoTouchOption',
+      'FxOneTouchOption',
+      'FxSpot',
+      'FxVanillaOption',
+      'GuaranteeNote',
+      'InlineWarrant',
+      'IpoOnStock',
+      'ManagedFund', // Obsolete
+      'MiniFuture',
+      'MutualFund',
+      'PortfolioNote',
+      'Rights',
+      'SrdOnEtf',
+      'SrdOnStock',
+      'Stock',
+      'StockIndex',
+      'StockIndexOption',
+      'StockOption',
+      'Warrant',
+      'WarrantDoubleKnockOut',
+      'WarrantKnockOut',
+      'WarrantOpenEndKnockOut',
+      'WarrantSpread',
+    ]
+    res.json({ status: 1, options: { searchbys: searchbys, types: assetTypes } })
+  }
+
   async history(req, res) {
     const { symbol, period, type, start, end } = req.query
     // if period is 1min then hmmm

@@ -407,7 +407,7 @@ app.delete('/api/quotes', async (req, res) => {
 })
 
 /* 
-  lookup
+  lookup - search
 */
 app.get('/api/lookup', (req, res) => {
   const { source } = req.query
@@ -415,7 +415,15 @@ app.get('/api/lookup', (req, res) => {
 })
 
 /* 
-  history
+  lookup options - return search options
+*/
+app.get('/api/lookup/options', (req, res) => {
+  const { source } = req.query
+  ldInterfaces[source.toLowerCase()].lookupOptions(req, res)
+})
+
+/* 
+  history - return history
 */
 app.get('/api/history', (req, res) => {
   const { source } = req.query
