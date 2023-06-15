@@ -508,7 +508,7 @@ class SaxoBank {
     let message = 'unsubscribed'
     const contextId = this.#getContextId(req)
     if (!referenceIds[contextId]) {
-      res.status(404).json({ message: 'Streaming Connection not found' })
+      res.status(200).json({ message: 'Streaming Connection not found' })
       return
     }
     if (referenceIds[contextId].length) {
