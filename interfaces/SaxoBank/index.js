@@ -426,7 +426,7 @@ class SaxoBank {
           }
           // add bar
           bars.push({
-            datetime: yyyymmdd,
+            datetime: dataDateTime.toISOString().replace('T', ' ').replace('Z', ''),
             open: response.data.Data[j].OpenBid,
             high: response.data.Data[j].HighBid,
             low: response.data.Data[j].LowAsk,
