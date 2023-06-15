@@ -507,6 +507,10 @@ class SaxoBank {
   async closeStream(req, res) {
     let message = 'unsubscribed'
     const contextId = this.#getContextId(req)
+    if (!referenceIds[contextId]) {
+      res.status(404).json({ message: 'Streaming Connection not found' })
+      return
+    }
     if (referenceIds[contextId].length) {
       await this.#unsubscribeTradePrices(req, res, contextId)
     }
