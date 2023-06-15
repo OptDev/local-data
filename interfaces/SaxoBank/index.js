@@ -427,10 +427,10 @@ class SaxoBank {
           // add bar
           bars.push({
             datetime: dataDateTime.toISOString().replace('T', ' ').replace('Z', ''),
-            open: response.data.Data[j].OpenBid,
-            high: response.data.Data[j].HighBid,
-            low: response.data.Data[j].LowAsk,
-            close: response.data.Data[j].CloseBid,
+            open: response.data.Data[j].Open ? response.data.Data[j].Open : response.data.Data[j].OpenBid,
+            high: response.data.Data[j].High ? response.data.Data[j].High : response.data.Data[j].HighBid,
+            low: response.data.Data[j].Low ? response.data.Data[j].Low : response.data.Data[j].LowBid,
+            close: response.data.Data[j].Close ? response.data.Data[j].Close : response.data.Data[j].CloseBid,
             volume: 0,
             oi: 0,
           })
@@ -739,6 +739,7 @@ class SaxoBank {
       if (message.payload.Quote.BidSize) ret.bidsize = message.payload.Quote.BidSize
       if (message.payload.Quote.AskSize) ret.asksize = message.payload.Quote.AskSize
       ret.type = 'q'
+      if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(JSON.stringify(ret))
       // req.query.nl is for test in a browser.
       res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
     }
@@ -752,6 +753,7 @@ class SaxoBank {
       if (message.payload.PriceInfoDetails.LastTradedSize) ret.size = message.payload.PriceInfoDetails.LastTradedSize
       if (message.payload.PriceInfoDetails.Volume) ret.volume = message.payload.PriceInfoDetails.Volume
       ret.type = 't'
+      if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(JSON.stringify(ret))
       res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
     }
     // PriceInfoDetails and PriceInfo exist
@@ -765,6 +767,7 @@ class SaxoBank {
       if (message.payload.PriceInfo.High) ret.high = message.payload.PriceInfo.High
       if (message.payload.PriceInfo.Low) ret.low = message.payload.PriceInfo.Low
       ret.type = 's'
+      if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(JSON.stringify(ret))
       res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
     }
   }
