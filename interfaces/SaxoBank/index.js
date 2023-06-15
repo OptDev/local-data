@@ -731,7 +731,7 @@ class SaxoBank {
     const symbol = message.referenceId.split('-')[0]
     if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(message.payload)
     // Quote exists
-    if (message.payload.Quote) {
+    if (message.payload.Quote && message.payload.LastUpdated) {
       const ret = {}
       ret.status = 1
       ret.symbol = symbol
@@ -746,7 +746,7 @@ class SaxoBank {
       res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
     }
     // PriceInfoDetails exists
-    if (message.payload.PriceInfoDetails) {
+    if (message.payload.PriceInfoDetails && message.payload.LastUpdated) {
       const ret = {}
       ret.status = 1
       ret.symbol = symbol
@@ -759,7 +759,7 @@ class SaxoBank {
       res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
     }
     // PriceInfoDetails and PriceInfo exist
-    if (message.payload.PriceInfoDetails && message.payload.PriceInfo) {
+    if (message.payload.PriceInfoDetails && message.payload.PriceInfo && message.payload.LastUpdated) {
       const ret = {}
       ret.status = 1
       ret.symbol = symbol
