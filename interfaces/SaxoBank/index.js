@@ -463,6 +463,11 @@ class SaxoBank {
     res.end()
   }
 
+  instruments(req, res) {
+    // there is no endpoint for insturments in saxobank so just return empty array
+    res.json({ status: 1, instruments: [] })
+  }
+
   openStream(req, res) {
     const contextId = this.#getContextId(req)
     let connection

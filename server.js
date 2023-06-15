@@ -430,6 +430,14 @@ app.get('/api/history', (req, res) => {
   ldInterfaces[source.toLowerCase()].history(req, res)
 })
 
+/* 
+  instruments - return instruments
+*/
+app.get('/api/instruments', (req, res) => {
+  const { source } = req.query
+  ldInterfaces[source.toLowerCase()].instruments(req, res)
+})
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`)
