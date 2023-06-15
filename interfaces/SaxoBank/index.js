@@ -26,6 +26,7 @@ https://openapi.help.saxo/hc/en-us/articles/4405260778653-How-can-I-get-historic
 
 for /api/quotes
 https://www.developer.saxo/openapi/learn/streaming
+https://www.developer.saxo/openapi/referencedocs/trade/v1/prices/addsubscriptionasync/e1dbfa7d3e2ef801a7c4ade9e57f8812
 https://saxobank.github.io/openapi-samples-js/websockets/realtime-quotes/
 */
 
@@ -728,6 +729,7 @@ class SaxoBank {
 
   #writeStreamingData(req, res, message) {
     const symbol = message.referenceId.split('-')[0]
+    if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(message.payload)
     // Quote exists
     if (message.payload.Quote) {
       const ret = {}
