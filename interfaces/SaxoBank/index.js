@@ -365,7 +365,15 @@ class SaxoBank {
   }
 
   async history(req, res) {
-    const { symbol, period, type, start, end } = req.query
+    let { code, symbol, period, type, start, end } = req.query
+
+    // if symbol is blank
+    if (!symbol) {
+      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, code, type)
+      symbol = map.symbol
+      type = map.type
+    }
+
     // if period is 1min then hmmm
     const inc = 1000
     const to = new Date().getTime() + 86400 * 1000 * 3 // millisecond ( add 3 days more not to miss today's data )
@@ -611,51 +619,61 @@ class SaxoBank {
   }
 
   async #subscribeTradePrices(req, res, contextId) {
-    let { instruments } = req.query
-    instruments = JSON.parse(atob(instruments))
+    let { instruments, symbol, type } = req.query
 
-    for (let i = 0; i < instruments.length; i++) {
-      // if symbol is null then get it from code
-      if (!instruments[i].symbol) {
-        const map = await this.#getSymbolFromCode(
-          req.accessTokenData.access_token,
-          instruments[i].code,
-          instruments[i].type
-        )
-        instruments[i].symbol = map.symbol
-        instruments[i].type = map.type
-      }
+    if (instruments) {
+      instruments = JSON.parse(atob(instruments))
+      for (let i = 0; i < instruments.length; i++) {
+        // if symbol is null then get it from code
+        if (!instruments[i].symbol) {
+          const map = await this.#getSymbolFromCode(
+            req.accessTokenData.access_token,
+            instruments[i].code,
+            instruments[i].type
+          )
+          instruments[i].symbol = map.symbol
+          instruments[i].type = map.type
+        }
 
-      // instruments[i].code
-      // instruments[i].symbol
-      // instruments[i].exchange
-      // instruments[i].type
-      const referenceId = this.#getReferenceId(req.opUsername, instruments[i].type, instruments[i].symbol)
-      referenceIds[contextId].push(referenceId)
-      const url = process.env.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions'
-      const payload = {
-        Arguments: {
-          AssetType: instruments[i].type,
-          Uic: instruments[i].symbol,
-        },
-        ContextId: contextId,
-        ReferenceId: referenceId, // 'ref-tp-' + contextId,
+        // instruments[i].code
+        // instruments[i].symbol
+        // instruments[i].exchange
+        // instruments[i].type
+        this.#tradePricesSubscription(req, res, contextId, instruments[i].type, instruments[i].symbol)
       }
-      const config = {
-        headers: {
-          Authorization: 'Bearer ' + req.accessTokenData.access_token,
-          'Content-Type': 'application/json; charset=utf-8',
-        },
-      }
-      axios
-        .post(url, payload, config)
-        .then((response) => {
-          console.log('Subscribe ' + instruments[i].symbol)
-        })
-        .catch((error) => {
-          // console.log(error.response.data)
-        })
+    } else if (symbol && type) {
+      // if symbol and type exist ( for testing )
+      this.#tradePricesSubscription(req, res, contextId, type, symbol)
     }
+  }
+
+  #tradePricesSubscription(req, res, contextId, type, symbol) {
+    const referenceId = this.#getReferenceId(req.opUsername, type, symbol)
+    referenceIds[contextId].push(referenceId)
+    const url = process.env.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions'
+    const payload = {
+      Arguments: {
+        AssetType: type,
+        Uic: symbol,
+        FieldGroups: ['PriceInfo', 'PriceInfoDetails', 'Quote'],
+      },
+      ContextId: contextId,
+      ReferenceId: referenceId,
+    }
+    const config = {
+      headers: {
+        Authorization: 'Bearer ' + req.accessTokenData.access_token,
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+    }
+    axios
+      .post(url, payload, config)
+      .then((response) => {
+        console.log('Subscribe ' + symbol)
+      })
+      .catch((error) => {
+        // console.log(error.response.data)
+      })
   }
 
   #handleSocketOpen() {
@@ -729,6 +747,7 @@ class SaxoBank {
 
   #writeStreamingData(req, res, message) {
     const symbol = message.referenceId.split('-')[0]
+    if (!message.payload.LastUpdated) console.log('LastUpdated is missing', message.payload)
     if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(message.payload)
     // Quote exists
     if (message.payload.Quote && message.payload.LastUpdated) {
