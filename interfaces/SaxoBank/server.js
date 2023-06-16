@@ -1,24 +1,14 @@
 const express = require('express')
 const axios = require('axios')
-const sampleDaily = require('./data/AAA.json')
-const sampleTicks = require('./data/sampleTicks.json')
 const fs = require('fs')
 require('dotenv').config()
 
 // variable for interfaces of local-data
 let ldInterfaces = []
-// read interfaces folder
-fs.readdir('./interfaces', (err, files) => {
-  files.forEach((file) => {
-    if (!process.env.ENABLED_PROVIDERS || process.env.ENABLED_PROVIDERS.split(',').includes(file.toLowerCase())) {
-      if (process.env.DEBUG === 'true') console.log('Interface ' + file.toLowerCase() + ' loaded')
-      // import all interfaces
-      const cls = require('./interfaces/' + file + '/index.js')
-      // create an object
-      ldInterfaces[file.toLowerCase()] = new cls()
-    }
-  })
-})
+// load SaxoBank Class
+const cls = require('./SaxoBank.js')
+// create an object
+ldInterfaces['saxobank'] = new cls()
 
 const exceptionEndPoints = ['/api/acb', '/api/login', '/api/authorize']
 const app = express()

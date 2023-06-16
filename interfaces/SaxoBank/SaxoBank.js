@@ -34,6 +34,7 @@ https://saxobank.github.io/openapi-samples-js/websockets/realtime-quotes/
 var connections = []
 var referenceIds = []
 var codeSymbolMaps = []
+var symbolCodeMaps = []
 
 class SaxoBank {
   getAccessTokenDataFromProvider(req, res) {
@@ -107,7 +108,7 @@ class SaxoBank {
 
   #accessTokenExpired(dataProvider, opUsername) {
     const currentTime = Math.round(Date.now() / 1000)
-    const accessTokenFile = './data/' + dataProvider + '.' + opUsername + '.dat'
+    const accessTokenFile = './' + dataProvider + '.' + opUsername + '.dat'
 
     if (fs.existsSync(accessTokenFile)) {
       // read file and parse
@@ -150,7 +151,7 @@ class SaxoBank {
 
   #saveAccessTokenData(dataProvider, opUsername, accessTokenData) {
     const currentTime = Math.round(Date.now() / 1000)
-    const accessTokenFile = './data/' + dataProvider + '.' + opUsername + '.dat'
+    const accessTokenFile = './' + dataProvider + '.' + opUsername + '.dat'
 
     accessTokenData.expiry = currentTime + accessTokenData.expires_in
     accessTokenData.refresh_token_expiry = currentTime + accessTokenData.refresh_token_expires_in
@@ -160,7 +161,7 @@ class SaxoBank {
   // This is called setInterval
   refreshAccessToken(accessTokenFile, dataProvider, opUsername) {
     const currentTime = Math.round(Date.now() / 1000)
-    const accessTokenData = JSON.parse(fs.readFileSync('./data/' + accessTokenFile, 'utf8'))
+    const accessTokenData = JSON.parse(fs.readFileSync('./' + accessTokenFile, 'utf8'))
     // Is refresh_token available?
     if (accessTokenData.refresh_token_expiry > currentTime) {
       const client_id = process.env.SAXOBANK_OAUTH_CLIENT_ID
@@ -218,7 +219,7 @@ class SaxoBank {
     const base64Credentials = req.headers.authorization.split(' ')[1]
     const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
     const opUsername = credentials.split(':')[0]
-    const accessTokenFile = './data/' + source + '.' + opUsername + '.dat'
+    const accessTokenFile = './' + source + '.' + opUsername + '.dat'
 
     // file exists?
     if (fs.existsSync(accessTokenFile)) {
@@ -635,6 +636,7 @@ class SaxoBank {
           instruments[i].type = map.type
         }
 
+        symbolCodeMaps[instruments[i].symbol] = instruments[i].code
         // instruments[i].code
         // instruments[i].symbol
         // instruments[i].exchange
@@ -754,6 +756,7 @@ class SaxoBank {
       const ret = {}
       ret.status = 1
       ret.symbol = symbol
+      ret.code = symbolCodeMaps[symbol]
       ret.datetime = this.#getYmdHis(message.payload.LastUpdated)
       if (message.payload.Quote.Bid) ret.bid = message.payload.Quote.Bid
       if (message.payload.Quote.Ask) ret.ask = message.payload.Quote.Ask
@@ -769,6 +772,7 @@ class SaxoBank {
       const ret = {}
       ret.status = 1
       ret.symbol = symbol
+      ret.code = symbolCodeMaps[symbol]
       ret.datetime = this.#getYmdHis(message.payload.LastUpdated)
       if (message.payload.PriceInfoDetails.LastTraded) ret.close = message.payload.PriceInfoDetails.LastTraded
       if (message.payload.PriceInfoDetails.LastTradedSize) ret.size = message.payload.PriceInfoDetails.LastTradedSize
@@ -782,6 +786,7 @@ class SaxoBank {
       const ret = {}
       ret.status = 1
       ret.symbol = symbol
+      ret.code = symbolCodeMaps[symbol]
       ret.datetime = this.#getYmdHis(message.payload.LastUpdated)
       if (message.payload.PriceInfoDetails.Open) ret.open = message.payload.PriceInfoDetails.Open
       if (message.payload.PriceInfoDetails.LastClose) ret.close = message.payload.PriceInfoDetails.LastClose

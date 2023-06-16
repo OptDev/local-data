@@ -1,5 +1,5 @@
 node_modules
 *.local
 .history
-.env
-data/saxobank.abc.dat
+
+interfaces/SaxoBank/.env
