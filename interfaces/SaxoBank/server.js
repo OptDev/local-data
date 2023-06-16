@@ -6,9 +6,9 @@ require('dotenv').config()
 // variable for interfaces of local-data
 let ldInterfaces = []
 // load SaxoBank Class
-const cls = require('./SaxoBank.js')
+const SaxoBank = require('./SaxoBank.js')
 // create an object
-ldInterfaces['saxobank'] = new cls()
+const sbObj = new SaxoBank()
 
 const exceptionEndPoints = ['/api/acb', '/api/login', '/api/authorize']
 const app = express()
@@ -25,76 +25,42 @@ const passAccessTokenDataToReq = async function (req, res, next) {
     return
   }
 
-  let { source, tusername } = req.query
-  // if source is not set then ignore the request ( ex) /favicon.ico )
-  if (!source) {
+  const { tusername } = req.query
+  // authorization is not set
+  if (!req.headers.authorization && !tusername) {
+    res.status(401).json({ message: 'Unauthorized' })
     return
   }
-  // change source to lower case
-  source = source.toLowerCase()
 
   let opUsername
-  ////////////////////////////////////////////////////////////////////////////////
-  // Please add a provider name here if the provider requires access-token
-  ////////////////////////////////////////////////////////////////////////////////
-  // does the provider need the access token?
-  if (process.env.ACCESS_TOKEN_REQUIRED_PROVIDERS.split(',').includes(source)) {
-    // authorization is not set
-    if (!req.headers.authorization && !tusername) {
-      res.status(401).json({ message: 'Unauthorized' })
-      return
-    }
-
-    if (tusername) {
-      // Is the test username set?
-      opUsername = tusername
-    } else {
-      // username : Optuma Username
-      // password : null
-      const base64Credentials = req.headers.authorization.split(' ')[1]
-      const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
-      opUsername = credentials.split(':')[0]
-    }
-
-    const accessTokenData = await ldInterfaces[source].getAccessTokenDataFromLocal(source, opUsername)
-    // access_token not available ( expired or not eixst )
-    if (!accessTokenData.access_token && accessTokenData.status === '0') {
-      // accessTokenData is an error json here
-      // accessTokenData.errordesc is the authorization full url
-      res.json(accessTokenData)
-      return
-    }
-
-    // pass accessTokenData to req
-    req.accessTokenData = accessTokenData
-    // pass username to req
-    req.opUsername = opUsername
+  if (tusername) {
+    // Is the test username set?
+    opUsername = tusername
+  } else {
+    // username : Optuma Username
+    // password : null
+    const base64Credentials = req.headers.authorization.split(' ')[1]
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
+    opUsername = credentials.split(':')[0]
   }
+
+  const accessTokenData = await sbObj.getAccessTokenDataFromLocal(opUsername)
+  // access_token not available ( expired or not eixst )
+  if (!accessTokenData.access_token && accessTokenData.status === '0') {
+    // accessTokenData is an error json here
+    // accessTokenData.errordesc is the authorization full url
+    res.json(accessTokenData)
+    return
+  }
+
+  // pass accessTokenData to req
+  req.accessTokenData = accessTokenData
+  // pass username to req
+  req.opUsername = opUsername
 
   next()
 }
 app.use(passAccessTokenDataToReq)
-
-// Middleware for 404 ( Not found ) and 501 ( Not Implemented )
-const IsRequestAvailable = function (req, res, next) {
-  // Is it an excpetion end point
-  if (exceptionEndPoints.includes(req.originalUrl.split('?').shift())) {
-    next()
-    return
-  }
-
-  const { source } = req.query
-
-  if (!ldInterfaces[source.toLowerCase()]) {
-    res.status(404).json({ message: 'Data Provider not found' })
-    return
-  }
-
-  next()
-}
-app.use(IsRequestAvailable)
-
-let externalStream // hold the external data stream reference so this can be closed / cancelled in close_stream
 
 /* 
  In custom_providers.yaml. If authenticate value is false, Optuma will not send login or logout request.
@@ -360,73 +326,63 @@ type s - snapshot of current day
   ex) http://localhost:3000/api/acb
 */
 app.get('/api/acb', (req, res) => {
-  const { state } = req.query
-  const [source, optumaClientId] = state.split('.')
-  ldInterfaces[source.toLowerCase()].getAccessTokenDataFromProvider(req, res)
+  sbObj.getAccessTokenDataFromProvider(req, res)
 })
 
 /*
   login : if privider uses oauth then it will return AUTHENTICATION_URL
 */
 app.post('/api/login', (req, res) => {
-  const { source } = req.query
-  ldInterfaces[source.toLowerCase()].login(req, res)
+  sbObj.login(req, res)
 })
 
 /*
   check if oauth is authorized or not
 */
 app.get('/api/authorize', (req, res) => {
-  const { source } = req.query
-  ldInterfaces[source.toLowerCase()].authorize(req, res)
+  sbObj.authorize(req, res)
 })
 
 /* 
   open streaming
 */
 app.get('/api/quotes', async (req, res) => {
-  const { source } = req.query
-  ldInterfaces[source.toLowerCase()].openStream(req, res)
+  sbObj.openStream(req, res)
 })
 
 /* 
   close streaming
 */
 app.delete('/api/quotes', async (req, res) => {
-  const { source } = req.query
-  ldInterfaces[source.toLowerCase()].closeStream(req, res)
+  sbObj.closeStream(req, res)
 })
 
 /* 
   lookup - search
 */
 app.get('/api/lookup', (req, res) => {
-  const { source } = req.query
-  ldInterfaces[source.toLowerCase()].lookup(req, res)
+  sbObj.lookup(req, res)
 })
 
 /* 
   lookup options - return search options
 */
 app.get('/api/lookup/options', (req, res) => {
-  const { source } = req.query
-  ldInterfaces[source.toLowerCase()].lookupOptions(req, res)
+  sbObj.lookupOptions(req, res)
 })
 
 /* 
   history - return history
 */
 app.get('/api/history', (req, res) => {
-  const { source } = req.query
-  ldInterfaces[source.toLowerCase()].history(req, res)
+  sbObj.history(req, res)
 })
 
 /* 
   instruments - return instruments
 */
 app.get('/api/instruments', (req, res) => {
-  const { source } = req.query
-  ldInterfaces[source.toLowerCase()].instruments(req, res)
+  sbObj.instruments(req, res)
 })
 
 // Start the server
@@ -436,13 +392,13 @@ app.listen(port, () => {
 
 // refresh access-token for all clients every 10 minutes
 // hopefully all provider's refresh_token_expires_in is longer then 10 minutes
-setInterval(() => {
-  fs.readdir('./data', (err, files) => {
-    files.forEach((file) => {
-      const [source, opUsername] = file.split('.')
-      if (process.env.ACCESS_TOKEN_REQUIRED_PROVIDERS.split(',').includes(source.toLowerCase())) {
-        ldInterfaces[source.toLowerCase()].refreshAccessToken(file, source.toLowerCase(), opUsername)
-      }
-    })
-  })
-}, 1000 * 60 * 10)
+// setInterval(() => {
+//   fs.readdir('./data', (err, files) => {
+//     files.forEach((file) => {
+//       const [source, opUsername] = file.split('.')
+//       if (process.env.ACCESS_TOKEN_REQUIRED_PROVIDERS.split(',').includes(source.toLowerCase())) {
+//         ldInterfaces[source.toLowerCase()].refreshAccessToken(file, source.toLowerCase(), opUsername)
+//       }
+//     })
+//   })
+// }, 1000 * 60 * 10)

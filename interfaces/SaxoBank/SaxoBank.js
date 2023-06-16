@@ -67,7 +67,8 @@ class SaxoBank {
       })
   }
 
-  async getAccessTokenDataFromLocal(dataProvider, opUsername) {
+  async getAccessTokenDataFromLocal(opUsername) {
+    const dataProvider = 'saxobank'
     const expired = this.#accessTokenExpired(dataProvider, opUsername)
     let accessTokenData
     // token expired?
