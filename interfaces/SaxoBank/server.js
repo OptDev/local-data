@@ -3,8 +3,6 @@ const axios = require('axios')
 const fs = require('fs')
 require('dotenv').config()
 
-// variable for interfaces of local-data
-let ldInterfaces = []
 // load SaxoBank Class
 const SaxoBank = require('./SaxoBank.js')
 // create an object
