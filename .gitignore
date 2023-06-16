@@ -4,3 +4,4 @@ node_modules
 
 interfaces/SaxoBank/.env
 interfaces/SaxoBank/saxobank.abc.dat
+interfaces/SaxoBank/atd.abc.dat

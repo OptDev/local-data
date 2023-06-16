@@ -39,7 +39,7 @@ var symbolCodeMaps = []
 class SaxoBank {
   getAccessTokenDataFromProvider(req, res) {
     const { code, state } = req.query
-    const [dataProvider, opUsername] = state.split('.')
+    const opUsername = state
 
     const client_id = process.env.SAXOBANK_OAUTH_CLIENT_ID
     const client_secret = process.env.SAXOBANK_OAUTH_CLIENT_SECRET
@@ -58,7 +58,7 @@ class SaxoBank {
     axios
       .post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
       .then((response) => {
-        this.#saveAccessTokenData(dataProvider, opUsername, response.data)
+        this.#saveAccessTokenData(opUsername, response.data)
         res.send('Authorization successfully granted')
       })
       .catch((error) => {
@@ -68,20 +68,13 @@ class SaxoBank {
   }
 
   async getAccessTokenDataFromLocal(opUsername) {
-    const dataProvider = 'saxobank'
-    const expired = this.#accessTokenExpired(dataProvider, opUsername)
+    const expired = this.#accessTokenExpired(opUsername)
+    const authFullUrl = this.#getAuthorizeFullUrl(opUsername)
     let accessTokenData
     // token expired?
     if (expired === true) {
       // send the authorization_url with params to Optuma
       // Optuma will hit the url
-      const params = new URLSearchParams({
-        response_type: 'code', // Please do not change. It must be 'code'
-        client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
-        state: dataProvider + '.' + opUsername,
-        redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
-      })
-      const authFullUrl = process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
       return {
         status: '0',
         errorcode: '990',
@@ -101,15 +94,22 @@ class SaxoBank {
       accessTokenData = await this.#getAccessTokenFromRefreshToken(accessTokenData.refresh_token)
       if (accessTokenData !== false) {
         // add expiry and refresh_token_expiry for handy
-        this.#saveAccessTokenData(dataProvider, opUsername, accessTokenData)
+        this.#saveAccessTokenData(opUsername, accessTokenData)
         return accessTokenData
       }
     }
+
+    // RefreshToken failed
+    return {
+      status: '0',
+      errorcode: '990',
+      errordesc: authFullUrl,
+    }
   }
 
-  #accessTokenExpired(dataProvider, opUsername) {
+  #accessTokenExpired(opUsername) {
     const currentTime = Math.round(Date.now() / 1000)
-    const accessTokenFile = './' + dataProvider + '.' + opUsername + '.dat'
+    const accessTokenFile = './atd.' + opUsername + '.dat'
 
     if (fs.existsSync(accessTokenFile)) {
       // read file and parse
@@ -150,9 +150,9 @@ class SaxoBank {
     }
   }
 
-  #saveAccessTokenData(dataProvider, opUsername, accessTokenData) {
+  #saveAccessTokenData(opUsername, accessTokenData) {
     const currentTime = Math.round(Date.now() / 1000)
-    const accessTokenFile = './' + dataProvider + '.' + opUsername + '.dat'
+    const accessTokenFile = './atd.' + opUsername + '.dat'
 
     accessTokenData.expiry = currentTime + accessTokenData.expires_in
     accessTokenData.refresh_token_expiry = currentTime + accessTokenData.refresh_token_expires_in
@@ -160,7 +160,7 @@ class SaxoBank {
   }
 
   // This is called setInterval
-  refreshAccessToken(accessTokenFile, dataProvider, opUsername) {
+  refreshAccessToken(accessTokenFile, opUsername) {
     const currentTime = Math.round(Date.now() / 1000)
     const accessTokenData = JSON.parse(fs.readFileSync('./' + accessTokenFile, 'utf8'))
     // Is refresh_token available?
@@ -184,43 +184,43 @@ class SaxoBank {
         .post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, headers)
         .then((response) => {
           // console.log('access_token renewed', response.data.access_token)
-          this.#saveAccessTokenData(dataProvider, opUsername, response.data)
+          this.#saveAccessTokenData(opUsername, response.data)
         })
         .catch((error) => {})
     }
   }
 
   login(req, res) {
-    let { source } = req.query
-    source = source.toLowerCase()
     const base64Credentials = req.headers.authorization.split(' ')[1]
     const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
     const opUsername = credentials.split(':')[0]
+    const expired = this.#accessTokenExpired(opUsername)
 
-    const expired = this.#accessTokenExpired(source, opUsername)
     if (expired === true) {
       // send the authorization_url with params to Optuma
       // Optuma will hit the url
-      const params = new URLSearchParams({
-        response_type: 'code', // Please do not change. It must be 'code'
-        client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
-        state: source + '.' + opUsername,
-        redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
-      })
-      const authFullUrl = process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
+      const authFullUrl = this.#getAuthorizeFullUrl(opUsername)
       res.json({ status: 1, auth_url: authFullUrl })
     } else {
       res.json({ status: 1, auth_url: 'authorized' })
     }
   }
 
+  #getAuthorizeFullUrl(opUsername) {
+    const params = new URLSearchParams({
+      response_type: 'code', // Please do not change. It must be 'code'
+      client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
+      state: opUsername,
+      redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
+    })
+    return process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
+  }
+
   authorize(req, res) {
-    let { source } = req.query
-    source = source.toLowerCase()
     const base64Credentials = req.headers.authorization.split(' ')[1]
     const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
     const opUsername = credentials.split(':')[0]
-    const accessTokenFile = './' + source + '.' + opUsername + '.dat'
+    const accessTokenFile = './atd.' + opUsername + '.dat'
 
     // file exists?
     if (fs.existsSync(accessTokenFile)) {
@@ -751,7 +751,7 @@ class SaxoBank {
   #writeStreamingData(req, res, message) {
     const symbol = message.referenceId.split('-')[0]
     if (!message.payload.LastUpdated) console.log('LastUpdated is missing', message.payload)
-    if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(message.payload)
+    if (process.env.DEBUG === 'true') console.log('SaxoBank Streaming Data', message.payload)
     // Quote exists
     if (message.payload.Quote && message.payload.LastUpdated) {
       const ret = {}
@@ -764,7 +764,7 @@ class SaxoBank {
       if (message.payload.Quote.BidSize) ret.bidsize = message.payload.Quote.BidSize
       if (message.payload.Quote.AskSize) ret.asksize = message.payload.Quote.AskSize
       ret.type = 'q'
-      if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(JSON.stringify(ret))
+      if (process.env.DEBUG === 'true') console.log(JSON.stringify(ret))
       // req.query.nl is for test in a browser.
       res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
     }
@@ -779,7 +779,7 @@ class SaxoBank {
       if (message.payload.PriceInfoDetails.LastTradedSize) ret.size = message.payload.PriceInfoDetails.LastTradedSize
       if (message.payload.PriceInfoDetails.Volume) ret.volume = message.payload.PriceInfoDetails.Volume
       ret.type = 't'
-      if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(JSON.stringify(ret))
+      if (process.env.DEBUG === 'true') console.log(JSON.stringify(ret))
       res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
     }
     // PriceInfoDetails and PriceInfo exist
@@ -794,7 +794,7 @@ class SaxoBank {
       if (message.payload.PriceInfo.High) ret.high = message.payload.PriceInfo.High
       if (message.payload.PriceInfo.Low) ret.low = message.payload.PriceInfo.Low
       ret.type = 's'
-      if (process.env.SAXOBANK_DEBUG_STREAMING === 'true') console.log(JSON.stringify(ret))
+      if (process.env.DEBUG === 'true') console.log(JSON.stringify(ret))
       res.write(JSON.stringify(ret) + (req.query.nl ? '\r\n' : ''))
     }
   }
