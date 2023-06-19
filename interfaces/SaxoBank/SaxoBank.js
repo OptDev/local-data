@@ -135,14 +135,14 @@ class SaxoBank {
       refresh_token: refreshToken,
       redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
     }
-    const headers = {
+    const config = {
       headers: {
         Authorization: 'Basic ' + auth,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     }
     try {
-      const response = await axios.post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, headers)
+      const response = await axios.post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
       return response.data
     } catch (error) {
       // console.log(error)
@@ -173,7 +173,7 @@ class SaxoBank {
         refresh_token: accessTokenData.refresh_token,
         redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
       }
-      const headers = {
+      const config = {
         headers: {
           Authorization: 'Basic ' + auth,
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -181,10 +181,12 @@ class SaxoBank {
       }
       // call axios in async mode
       axios
-        .post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, headers)
+        .post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
         .then((response) => {
           // console.log('access_token renewed', response.data.access_token)
           this.#saveAccessTokenData(opUsername, response.data)
+          // extend subscription
+          this.#extendSubscription(opUsername, response.data.access_token)
         })
         .catch((error) => {})
     }
@@ -532,6 +534,29 @@ class SaxoBank {
     res.status(200).json({ message: message })
   }
 
+  #extendSubscription(opUsername, accessToken) {
+    const req = { opUsername: opUsername }
+    const contextId = this.#getContextId(req)
+    // there is no connection
+    if (!connections[contextId]) {
+      return
+    }
+
+    const config = {
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+      },
+    }
+    axios
+      .put('https://' + process.env.SAXOBANK_WEB_SOCKET_URL + '/authorize?contextid=' + contextId, null, config)
+      .then((response) => {
+        console.log(response)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
   async #getSymbolFromCode(accessToken, code, type) {
     // if it exists in codeSymbolMaps then get it from codeSymbolMaps
     if (codeSymbolMaps[code]) {
@@ -689,6 +714,7 @@ class SaxoBank {
       console.log('Streaming disconnected with code ' + event.code + '.') // Most likely 1000 (Normal Closure), or 1001 (Going Away)
     } else {
       console.error('Streaming disconnected with code ' + event.code + '.')
+      console.log('event', event)
       //   if (demo.getSecondsUntilTokenExpiry(document.getElementById('idBearerToken').value) <= 0) {
       //     window.alert(
       //       'It looks like the socket has been disconnected due to an expired token (error code ' + evt.code + ').'
@@ -915,6 +941,7 @@ class SaxoBank {
   #createConnection(accessToken, contextId) {
     // const url = 'https://streaming.saxobank.com/sim/openapi/streamingws/connect?contextId=' + contextId
     const url =
+      'wss://' +
       process.env.SAXOBANK_WEB_SOCKET_URL +
       '/connect' +
       '?authorization=' +
