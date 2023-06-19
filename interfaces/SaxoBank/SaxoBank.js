@@ -464,6 +464,7 @@ class SaxoBank {
         status: 1,
         last_data_set: last_data_set, // to tell this is the last response,
         symbol: symbol,
+        code: code,
         bars: bars,
       }
       res.write(JSON.stringify(data))
