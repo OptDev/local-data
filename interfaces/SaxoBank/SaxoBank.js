@@ -779,10 +779,13 @@ class SaxoBank {
     const symbol = message.referenceId.split('-')[0]
     if (!message.payload.LastUpdated) {
       console.log('LastUpdated is missing', message.payload)
-      if (message.payload.Timestamps.BidTime) message.payload.LastUpdated = message.payload.Timestamps.BidTime
-      else if (message.payload.Timestamps.AskTime) message.payload.LastUpdated = message.payload.Timestamps.AskTime
-      else if (message.payload.Timestamps.LastTradedVolumeTime)
-        message.payload.LastUpdated = message.payload.Timestamps.LastTradedVolumeTime
+      // message.payload.Timestamps also could be null
+      if (message.payload.Timestamps) {
+        if (message.payload.Timestamps.BidTime) message.payload.LastUpdated = message.payload.Timestamps.BidTime
+        else if (message.payload.Timestamps.AskTime) message.payload.LastUpdated = message.payload.Timestamps.AskTime
+        else if (message.payload.Timestamps.LastTradedVolumeTime)
+          message.payload.LastUpdated = message.payload.Timestamps.LastTradedVolumeTime
+      }
     }
     if (process.env.DEBUG === 'true') console.log('SaxoBank Streaming Data', message.payload)
     // Quote exists
