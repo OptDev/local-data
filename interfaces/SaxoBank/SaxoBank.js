@@ -406,7 +406,6 @@ class SaxoBank {
           Time: new Date(i).toUTCString(),
           Count: 1000,
         })
-        console.log(params)
         const url = process.env.SAXOBANK_API_BASE_URL + '/chart/v1/charts/?' + params.toString()
         const config = {
           headers: {
@@ -471,10 +470,9 @@ class SaxoBank {
         code: code,
         bars: bars,
       }
-      res.write(JSON.stringify(data))
+      res.write(JSON.stringify(data) + '\r\n')
 
       if (reached) {
-        res.write('\r\n')
         break
       }
     }
