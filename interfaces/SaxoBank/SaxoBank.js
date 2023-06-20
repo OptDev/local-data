@@ -379,7 +379,10 @@ class SaxoBank {
     }
 
     // if period is 1min then hmmm
-    const inc = 1000
+    let inc = 1000
+    if (period === '1min') {
+      inc = 1
+    }
     const to = new Date().getTime() + 86400 * 1000 * 3 // millisecond ( add 3 days more not to miss today's data )
     const from = new Date(start).getTime()
     const horizon = this.#getHorizonFromPeriod(period)
@@ -401,8 +404,9 @@ class SaxoBank {
           // Time: new Date(i - 86400 * 1000 * inc).toUTCString(),
           Mode: 'UpTo',
           Time: new Date(i).toUTCString(),
-          Count: inc,
+          Count: 1000,
         })
+        console.log(params)
         const url = process.env.SAXOBANK_API_BASE_URL + '/chart/v1/charts/?' + params.toString()
         const config = {
           headers: {
@@ -470,6 +474,7 @@ class SaxoBank {
       res.write(JSON.stringify(data))
 
       if (reached) {
+        res.write('\r\n')
         break
       }
     }
