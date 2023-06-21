@@ -150,21 +150,25 @@ class SaxoBank {
     }
   }
 
-  #saveAccessTokenData(opUsername, accessTokenData) {
+  #saveAccessTokenData(opUsername, accessTokenData, md5OpUsername) {
     const currentTime = Math.round(Date.now() / 1000)
-    const accessTokenFile = './' + this.#getAccessTokenFileName(opUsername)
+    const accessTokenFile = './' + this.#getAccessTokenFileName(opUsername, md5OpUsername)
 
     accessTokenData.expiry = currentTime + accessTokenData.expires_in
     accessTokenData.refresh_token_expiry = currentTime + accessTokenData.refresh_token_expires_in
     fs.writeFileSync(accessTokenFile, JSON.stringify(accessTokenData))
   }
 
-  #getAccessTokenFileName(opUsername) {
-    return 'atd.' + CryptoJS.MD5(opUsername).toString() + '.dat'
+  #getAccessTokenFileName(opUsername, md5OpUsername) {
+    if (md5OpUsername) {
+      return 'atd.' + md5OpUsername + '.dat'
+    } else {
+      return 'atd.' + CryptoJS.MD5(opUsername).toString() + '.dat'
+    }
   }
 
   // This is called setInterval
-  refreshAccessToken(accessTokenFile, opUsername) {
+  refreshAccessToken(accessTokenFile, md5OpUsername) {
     const currentTime = Math.round(Date.now() / 1000)
     const accessTokenData = JSON.parse(fs.readFileSync('./' + accessTokenFile, 'utf8'))
     // Is refresh_token available?
@@ -188,9 +192,9 @@ class SaxoBank {
         .post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
         .then((response) => {
           // console.log('access_token renewed', response.data.access_token)
-          this.#saveAccessTokenData(opUsername, response.data)
+          this.#saveAccessTokenData(null, response.data, md5OpUsername)
           // extend subscription
-          this.#extendSubscription(opUsername, response.data.access_token)
+          this.#extendSubscription(md5OpUsername, response.data.access_token)
         })
         .catch((error) => {})
     }
@@ -542,9 +546,7 @@ class SaxoBank {
     res.status(200).json({ message: message })
   }
 
-  #extendSubscription(opUsername, accessToken) {
-    const req = { opUsername: opUsername }
-    const contextId = this.#getContextId(req)
+  #extendSubscription(contextId, accessToken) {
     // there is no connection
     if (!connections[contextId]) {
       return

@@ -194,9 +194,9 @@ app.listen(port, () => {
 setInterval(() => {
   fs.readdir('./', (err, files) => {
     files.forEach((file) => {
-      const [prefix, opUsername, extension] = file.split('.')
+      const [prefix, md5OpUsername, extension] = file.split('.')
       if (prefix === 'atd' && extension === 'dat') {
-        sbObj.refreshAccessToken(file, opUsername)
+        sbObj.refreshAccessToken(file, md5OpUsername)
       }
     })
   })
