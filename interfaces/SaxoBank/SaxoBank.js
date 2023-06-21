@@ -455,7 +455,7 @@ class SaxoBank {
             high: response.data.Data[j].High ? response.data.Data[j].High : response.data.Data[j].HighBid,
             low: response.data.Data[j].Low ? response.data.Data[j].Low : response.data.Data[j].LowBid,
             close: response.data.Data[j].Close ? response.data.Data[j].Close : response.data.Data[j].CloseBid,
-            volume: 0,
+            volume: response.data.Data[j].Volume ? response.data.Data[j].Volume : 0,
             oi: 0,
           })
           prevOldestDataTime = response.data.Data[j].Time
