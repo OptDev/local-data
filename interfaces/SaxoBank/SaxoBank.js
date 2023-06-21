@@ -109,7 +109,7 @@ class SaxoBank {
 
   #accessTokenExpired(opUsername) {
     const currentTime = Math.round(Date.now() / 1000)
-    const accessTokenFile = './atd.' + opUsername + '.dat'
+    const accessTokenFile = './' + this.#getAccessTokenFileName(opUsername)
 
     if (fs.existsSync(accessTokenFile)) {
       // read file and parse
@@ -152,11 +152,15 @@ class SaxoBank {
 
   #saveAccessTokenData(opUsername, accessTokenData) {
     const currentTime = Math.round(Date.now() / 1000)
-    const accessTokenFile = './atd.' + opUsername + '.dat'
+    const accessTokenFile = './' + this.#getAccessTokenFileName(opUsername)
 
     accessTokenData.expiry = currentTime + accessTokenData.expires_in
     accessTokenData.refresh_token_expiry = currentTime + accessTokenData.refresh_token_expires_in
     fs.writeFileSync(accessTokenFile, JSON.stringify(accessTokenData))
+  }
+
+  #getAccessTokenFileName(opUsername) {
+    return 'atd.' + CryptoJS.MD5(opUsername).toString() + '.dat'
   }
 
   // This is called setInterval
@@ -222,7 +226,7 @@ class SaxoBank {
     const base64Credentials = req.headers.authorization.split(' ')[1]
     const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
     const opUsername = credentials.split(':')[0]
-    const accessTokenFile = './atd.' + opUsername + '.dat'
+    const accessTokenFile = './' + this.#getAccessTokenFileName(opUsername)
 
     // file exists?
     if (fs.existsSync(accessTokenFile)) {

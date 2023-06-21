@@ -3,5 +3,4 @@ node_modules
 .history
 
 interfaces/SaxoBank/.env
-interfaces/SaxoBank/saxobank.abc.dat
-interfaces/SaxoBank/atd.abc.dat
+interfaces/SaxoBank/atd.900150983cd24fb0d6963f7d28e17f72.dat
