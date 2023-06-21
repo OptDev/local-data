@@ -383,16 +383,16 @@ class SaxoBank {
     if (period === '1min') {
       inc = 1
     }
-    const to = new Date().getTime() + 86400 * 1000 * 3 // millisecond ( add 3 days more not to miss today's data )
+    const to = new Date(end).getTime() + 86400 * 1000 // millisecond ( add 1 day more not to miss today's data )
     const from = new Date(start).getTime()
     const horizon = this.#getHorizonFromPeriod(period)
     let reached = false
     let last_data_set = 0
     let bars = []
-    let prevOldestDataDate = false
+    let prevOldestDataTime = '9999-12-31T23:59:59.000000Z' // false
 
     res.setHeader('content-type', 'application/json')
-    for (let i = to; i > from; i = i - 86400 * 1000 * inc) {
+    for (let i = to; i >= from; i = i - 86400 * 1000 * inc) {
       last_data_set = 0
       bars = []
       try {
@@ -436,7 +436,7 @@ class SaxoBank {
             last_data_set = 1
             break
           }
-          if (prevOldestDataDate && yyyymmdd >= prevOldestDataDate) {
+          if (response.data.Data[j].Time >= prevOldestDataTime) {
             // this data is already sent so skip
             continue
           }
@@ -450,8 +450,8 @@ class SaxoBank {
             volume: 0,
             oi: 0,
           })
+          prevOldestDataTime = response.data.Data[j].Time
         }
-        prevOldestDataDate = bars[bars.length - 1].datetime
       } catch (error) {
         // Handle any errors that occurred during the request
         // console.error('Error retrieving history from external API:', error)
