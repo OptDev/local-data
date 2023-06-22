@@ -51,7 +51,7 @@ npm install
 #### Start Node Server
 This starts the server and in a browser you can go to the URL:Port (by default http://localhost:3000) and see a message confirming that your Node server is running.
 ```
-cd Interfaces/interface
+cd Interfaces/<interface>
 node server.js
 ```
 
