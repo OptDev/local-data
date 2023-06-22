@@ -437,12 +437,22 @@ class SaxoBank {
           //   Time: '2019-08-09T00:00:00.000000Z'
           // }
           const dataDateTime = new Date(response.data.Data[j].Time)
-          const yyyymmdd = dataDateTime.toISOString().split('T')[0] // get yyyy-mm-dd
-          if (start >= yyyymmdd) {
-            // reach to start-date so break
-            reached = true
-            last_data_set = 1
-            break
+          if (period !== '1min') {
+            // compare yyyy-mm-dd
+            if (start >= dataDateTime.toISOString().split('T')[0]) {
+              // reach to start-date so break
+              reached = true
+              last_data_set = 1
+              break
+            }
+          } else {
+            // compare yyyy-mm-dd hh:ii:ss.zzz
+            if (start + ' 00:00:00.000' >= dataDateTime.toISOString().replace('T', ' ').replace('Z', '')) {
+              // reach to start-date so break
+              reached = true
+              last_data_set = 1
+              break
+            }
           }
           if (response.data.Data[j].Time >= prevOldestDataTime) {
             // this data is already sent so skip
