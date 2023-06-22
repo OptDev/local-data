@@ -51,6 +51,7 @@ npm install
 #### Start Node Server
 This starts the server and in a browser you can go to the URL:Port (by default http://localhost:3000) and see a message confirming that your Node server is running.
 ```
+cd Interfaces/interface
 node server.js
 ```
 
@@ -109,10 +110,15 @@ demo1:
   web: https://google.com
   server: http://localhost
   port: 3000
-  data_products: 1,6
+  data_products:
+  - id: 1
+    gmt-offset: 10
+  - id: 6
+    gmt-offset: 0
+  - id: 181
+    gmt-offset: -4
   timeframe: Day,Minute,Tick
   realtime: true
-  search_type: Search by Code|Search by Description|Search by Figi
 ```
 | Field | Required | Type | Description | Example |
 | --- | --- | --- | --- | --- |
@@ -126,10 +132,12 @@ demo1:
 | web || string | This is the web address of a page that explains more about this connection. It is displayed as a *More Information* link in the connection configuration form in Optuma. | https://github.com/OptDev/local-data | 
 | server | * | string | The address of the REST server that Optuma needs to connect to. | http://localhost |
 | port | * | integer | The port, or channel, that the REST server is expecting connections on. This must be a unique unused port on each server/pc. | 3000 |
-| data_products || integers | A comma seperated array of Optuma data product ids. A partial list of the ids and the Optuma Data Selection they represent is included below. If this is not set, individual securities will have to be manually added in Optuma. | 1, 6, 181 |
+| data_products || node | Optuma data product ids
+| id || integer | Optuma data product id. The Optuma Data Selection Ids they represent is included below. If this is not set, individual securities will have to be manually added in Optuma. | 181 |
+| gmt-offset || integer | The GMT offset in hours for the data product if the timestamps in the data are sent in UTC. | -4, 0, 10 |
 | timeframes | * | set of strings | A comma separated array of time frames which this service can return historical data for. | Day, Minute, Tick |
 | realtime | * | boolean | Does this service return streaming tick data? | false |
-| search_type || set of strings | A pipe (\|) separated array of search strings. In the Optuma search, what are the options that should be shown to the user. | Search by Code\|Search by Description\|Search By FIGI |
+
 
 ^ For services where a user specific password or token is required, it is recommended that those details not be entered in here but rather the user enters them when they *Configure Data Providers* in Optuma.
 
@@ -167,3 +175,60 @@ Create a Pull Request: On Github, you initiate a pull request by comparing the c
 Review and Discussion: The project maintainers will review your changes, providing feedback. This process often takes place in the comments section of the pull request.
 
 Merge: Once the project maintainers are satisfied with your additions, they can choose to merge your branch into the main branch of the original project. This action incorporates your modifications into the official codebase available for others.
+
+
+### Data Product Ids
+Data Product Id|Name
+---|---
+1|ASX Shares
+3|Sydney Futures Exchange
+5|World Indices
+6|Foreign Exchange
+7|ASX Options and Warrants
+21|CBOT
+20|CME
+22|NYBOT
+34|LSE
+65|Commodities
+72|TSXV
+71|TSX
+67|Singapore
+74|OTCBB
+78|NSE
+80|American Futures
+81|European Futures
+82|Asian Futures
+107|Dow Jones Indices
+109|S&P Indices
+111|TSX Indices
+114|US Funds
+117|Euronext Stocks
+119|Johannesburg Stocks
+120|Major Euro Stocks
+121|Minor Euro Stocks
+122|Nordic Stocks
+123|TEL Aviv Stocks
+125|Chinese Stocks
+127|Japan Stocks
+129|Mexican Stocks
+131|Hong Kong Stocks
+134|Brazilian Equities
+169|COT Data
+152|Korean Equities
+155|Taiwan Equities
+158|Malaysian Equities
+161|New Zealand Equities
+164|Chilean Equities
+181|US Equities
+191|CBOE Indices
+185|Indonesian Stocks
+187|Crypto Currencies
+209|European Indices
+211|Chi-X Australia
+217|Vietnam Equities
+223|US Mutual Funds
+227|Taipei Stocks
+229|Philippines Equities
+231|Turkey Equities
+235|Hang Seng Indices
+
