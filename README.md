@@ -48,6 +48,11 @@ In VS Code:
 npm install
 ```
 
+#### Configure Server
+The server has a config file  .env file that needs to be configured.
+Copy the .env.example to .env in the interface folder (save location as server.js)
+edit the .env and add any keys required.
+
 #### Start Node Server
 This starts the server and in a browser you can go to the URL:Port (by default http://localhost:3000) and see a message confirming that your Node server is running.
 ```
