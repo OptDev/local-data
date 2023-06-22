@@ -45,7 +45,7 @@ In VS Code:
 
 #### Install packages
 ```
-cd Interfaces/<interface>
+cd local-data/Interfaces/<interface>
 npm install
 ```
 
