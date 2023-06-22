@@ -35,6 +35,7 @@ var connections = []
 var referenceIds = []
 var codeSymbolMaps = []
 var symbolCodeMaps = []
+var symbolAssetTypeMaps = []
 
 class SaxoBank {
   getAccessTokenDataFromProvider(req, res) {
@@ -683,6 +684,7 @@ class SaxoBank {
         }
 
         symbolCodeMaps[instruments[i].symbol] = instruments[i].code
+        symbolAssetTypeMaps[instruments[i].symbol] = instruments[i].type
         // instruments[i].code
         // instruments[i].symbol
         // instruments[i].exchange
@@ -818,6 +820,9 @@ class SaxoBank {
       if (message.payload.Quote.Ask) ret.ask = message.payload.Quote.Ask
       if (message.payload.Quote.BidSize) ret.bidsize = message.payload.Quote.BidSize
       if (message.payload.Quote.AskSize) ret.asksize = message.payload.Quote.AskSize
+      if (symbolAssetTypeMaps[symbol] === 'FxSpot') {
+        if (message.payload.Quote.Bid) ret.close = message.payload.Quote.Bid
+      }
       ret.type = 'q'
       if (process.env.DEBUG === 'true') console.log(JSON.stringify(ret))
       // req.query.nl is for test in a browser.
