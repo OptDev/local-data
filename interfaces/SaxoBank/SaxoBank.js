@@ -378,11 +378,11 @@ class SaxoBank {
   }
 
   async history(req, res) {
-    let { code, symbol, period, type, start, end } = req.query
+    let { code, symbol, period, type, start, end, mic } = req.query
 
     // if symbol is blank
     if (!symbol) {
-      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, code, type)
+      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, code + ':' + mic, type)
       symbol = map.symbol
       type = map.type
     }
@@ -621,10 +621,10 @@ class SaxoBank {
   }
 
   async #unsubscribeTradePrices(req, res, contextId) {
-    let { type, symbol, code } = req.query
+    let { type, symbol, code, mic } = req.query
     // if symbol is null then get it from code
     if (!symbol) {
-      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, code, type)
+      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, code + ':' + mic, type)
       symbol = map.symbol
       type = map.type
     }
@@ -676,7 +676,7 @@ class SaxoBank {
         if (!instruments[i].symbol) {
           const map = await this.#getSymbolFromCode(
             req.accessTokenData.access_token,
-            instruments[i].code,
+            instruments[i].code + ':' + instruments[i].mic,
             instruments[i].type
           )
           instruments[i].symbol = map.symbol
