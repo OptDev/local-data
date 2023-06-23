@@ -382,7 +382,8 @@ class SaxoBank {
 
     // if symbol is blank
     if (!symbol) {
-      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, code + ':' + mic, type)
+      const codeWithMic = code + (mic ? ':' + mic : '')
+      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, codeWithMic, type)
       symbol = map.symbol
       type = map.type
     }
@@ -624,7 +625,8 @@ class SaxoBank {
     let { type, symbol, code, mic } = req.query
     // if symbol is null then get it from code
     if (!symbol) {
-      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, code + ':' + mic, type)
+      const codeWithMic = code + (mic ? ':' + mic : '')
+      const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, codeWithMic, type)
       symbol = map.symbol
       type = map.type
     }
@@ -674,11 +676,8 @@ class SaxoBank {
       for (let i = 0; i < instruments.length; i++) {
         // if symbol is null then get it from code
         if (!instruments[i].symbol) {
-          const map = await this.#getSymbolFromCode(
-            req.accessTokenData.access_token,
-            instruments[i].code + ':' + instruments[i].mic,
-            instruments[i].type
-          )
+          const codeWithMic = instruments[i].code + (instruments[i].mic ? ':' + instruments[i].mic : '')
+          const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, codeWithMic, instruments[i].type)
           instruments[i].symbol = map.symbol
           instruments[i].type = map.type
         }
