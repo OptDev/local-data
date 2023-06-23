@@ -588,7 +588,7 @@ class SaxoBank {
     // try to lookup
     const params = new URLSearchParams({
       AssetTypes: '',
-      Keywords: code.split(':')[0],
+      Keywords: code,
     })
     const url = process.env.SAXOBANK_API_BASE_URL + '/ref/v1/instruments/?' + params.toString()
     const config = {
@@ -614,7 +614,8 @@ class SaxoBank {
     //   TradableAs: [ 'CfdOnStock' ]
     // }
     for (let i = 0; i < response.data.Data.length; i++) {
-      if (code.split(':')[0].toLowerCase() === response.data.Data[i].Symbol.split(':')[0].toLowerCase()) {
+      // if (code.split(':')[0].toLowerCase() === response.data.Data[i].Symbol.split(':')[0].toLowerCase()) {
+      if (code.toLowerCase() === response.data.Data[i].Symbol.toLowerCase()) {
         codeSymbolMaps[code] = { symbol: response.data.Data[i].Identifier, type: response.data.Data[i].AssetType }
         return codeSymbolMaps[code]
       }
