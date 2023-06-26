@@ -1,0 +1,21 @@
+---
+saxobank:
+  name: Saxo Bank
+  code: saxobank
+  source: saxobank
+  authenticate:
+    value: true
+    username: demouser
+    password:
+  web: https://www.home.saxo/
+  server: http://localhost
+  port: 3000
+  data_products:
+    - id: 1
+      gmt-offset: 10
+    - id: 6
+      gmt-offset: 0
+    - id: 181
+      gmt-offset: -4
+  timeframe: Day,Minute
+  realtime: true
