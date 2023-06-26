@@ -27,26 +27,25 @@ Note: The Node application can be installed anywhere and the default location th
 ## Installation
 The following instructions will step you through cloning the repository and connecting the sample Node server to Optuma.
 
-### Clone the Optuma Node Server
+### Download the SaxoBank Folder by using the following link
 ```
-git clone https://github.com/OptDev/local-data.git
+[git clone https://github.com/OptDev/local-data.git](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/OptDev/local-data/tree/main/interfaces/SaxoBank)
 ```
-You can also download the code by pressing on the Green Code button at the top right of this page.
+Unzip the file to a folder on your PC. eg C:\SaxoBank
 
-### Open VSCode
-In VS Code:
-* Select the folder that you downloaded as the workspace
-* Navigate into the "Demo" folder
-* Open server.js
-* From the Menu, select *Terminal* then *New Terminal*
-* In the new Terminal Window type the following commands to Install packages (dependencies)
+### Install Dependencies
+* Open a command prompt - Right-click the Windows Start button and select Terminal 
+* Navigate to the folder where you saved SaxoBank
 ```
-cd local-data/Interfaces/<interface>
+cd C:\SaxoBank
+```
+* Install Node Packages
+```
 npm install
-```
+```  
 
 #### Configure Server
-The server has a config file  .env file that needs to be configured.
+The SaxoBank interface has a config file (.env) that needs to be configured.
 Copy the .env.example to .env in the interface folder (save location as server.js)
 edit the .env and add any keys required.
 
@@ -132,7 +131,7 @@ demo1:
 | server | * | string | The address of the REST server that Optuma needs to connect to. | http://localhost |
 | port | * | integer | The port, or channel, that the REST server is expecting connections on. This must be a unique unused port on each server/pc. | 3000 |
 | data_products || node | Optuma data product ids
-| id || integer | Optuma data product id. The Optuma Data Selection Ids they represent are included below. If this is not set, individual securities will have to be manually added in Optuma. | 181 |
+| id || integer | Optuma data product id. The Optuma Data Selection Ids they represent are included in the tool ReadMe file in this repository. If this is not set, individual securities will have to be manually added in Optuma. | 181 |
 | gmt-offset || integer | The GMT offset in hours for the data product if the timestamps in the data are sent in UTC. | -4, 0, 10 |
 | timeframes | * | set of strings | A comma-separated array of time frames which this service can return historical data for. | Day, Minute, Tick |
 | realtime | * | boolean | Does this service return streaming tick data? | false |
