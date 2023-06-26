@@ -63,28 +63,12 @@ The default Optuma Settings location is
 ```
 {Documents}\Optuma\Local\Common
 ```
-if you moved your Optuma Document folder to a different location, then you will need to move this file to that location. You can see your current documents location in Optuma by selecting the *Settings* menu and then *File Location Settings*.
+if you moved your Optuma Document folder to a different location, then you will need to move this file to that location. You can see your current documents folder location in Optuma by selecting the *Settings* menu and then *File Location Settings*.
 
 ### Restart Optuma 
 Once restarted, follow these steps in Optuma to make the connection:
 * From the *Data* menu, select *Configure Data Providers* and select the local data interface. 
   The data sources that are supported by this interface (defined in the Custom_Providers.yaml file) will be listed. Move them to the right.
-
-* Open any file from one of the selected exchanges.
-  The sample data is very choppy and it will be obvious that the sample data is being read.
-  
-CONGRATULATIONS - you have successfully connected your copy of Optuma to a REST server and you can now start developing your own connection to the data provider of your choice.
-
-
-## Developing a Server
-
-Now that you have a connection established, you can start to develop your connection. 
-
-NOTE: If you plan to submit your work back into the public repository for others to use, please follow these guidelines.
-* Never include passwords or tokens in your js files and upload them to the repository. They are requested from the user when they select *Configure Data Providers* in Optuma.
-* Create a folder under *Interfaces* with the name of the data source your work is for.
-* copy your server.js and any other files into this new location
-* copy Custom_Providers.yaml into this location and fill with sample data that another user will update. Note: this file will not be used in this location, it is only there as a reference of how to access your system. While developing, you will need to edit the Custom_Providers.yaml file in the Optuma Documents location.
 
 ## Configuration File
 
@@ -97,13 +81,14 @@ As mentioned above, the default location for this file is
 The following is an example of the configuration file.
 ```yaml 
 ---
-demo1:
-  name: Demo Custom Provider
-  code: demo1
+saxobank:
+  name: Saxo Bank Limited
+  code: saxobank
+  source: saxobank
   authenticate:
     value: true
     username: demouser
-    password:
+    password: 
     token: 222
   web: https://google.com
   server: http://localhost
@@ -137,96 +122,5 @@ demo1:
 | realtime | * | boolean | Does this service return streaming tick data? | false |
 
 
-^ For services where a user-specific password or token is required, it is recommended that those details not be entered in here but rather the user enters them when they *Configure Data Providers* in Optuma.
 
-### Multiple Data Sources
-It's important to note that there can be multiple data sources configured in this one file. Each service will be under a master node in the yaml file.
-Note: If multiple services are being used on the same PC (as a server), they must operate on unique ports.
-```yaml
----
-demo1:
-  name: Data Source 1
-  ...
-  port: 3000
-
-demo2:
-   name: Data Source 2
-   ...
-   port: 3001
-```
-
-### Making Your Server Public
-Once you have coded a new Node server and it is all working well, you can commit and push your server back to OptDev, so it's available for others to use. Follow these steps to make your local data server available to others.
-
-Fork: You first create a personal copy of this project by "forking" the project in Github.
-
-Branch: In your forked repository, you create a new branch off the main branch to work on your proposed changes. 
-
-Make Changes: Create a new folder with the provider name under the Interfaces folder as a place to add your new server code.
-
-Commit: As you work on your changes, you commit your modifications to the branch.
-
-Push: Once you're ready to share your changes with the original project, you push your branch with the committed changes to your forked repository on the version control platform.
-
-Create a Pull Request: On Github, you initiate a pull request by comparing the changes in your branch with the original project's main branch. This action submits a request for the project maintainers to review your proposed changes.
-
-Review and Discussion: The project maintainers will review your changes, and provide feedback. This process often takes place in the comments section of the pull request.
-
-Merge: Once the project maintainers are satisfied with your additions, they can choose to merge your branch into the main branch of the original project. This action incorporates your modifications into the official codebase available for others.
-
-
-### Data Product Ids
-Data Product Id|Name
----|---
-1|ASX Shares
-3|Sydney Futures Exchange
-5|World Indices
-6|Foreign Exchange
-7|ASX Options and Warrants
-21|CBOT
-20|CME
-22|NYBOT
-34|LSE
-65|Commodities
-72|TSXV
-71|TSX
-67|Singapore
-74|OTCBB
-78|NSE
-80|American Futures
-81|European Futures
-82|Asian Futures
-107|Dow Jones Indices
-109|S&P Indices
-111|TSX Indices
-114|US Funds
-117|Euronext Stocks
-119|Johannesburg Stocks
-120|Major Euro Stocks
-121|Minor Euro Stocks
-122|Nordic Stocks
-123|TEL Aviv Stocks
-125|Chinese Stocks
-127|Japan Stocks
-129|Mexican Stocks
-131|Hong Kong Stocks
-134|Brazilian Equities
-169|COT Data
-152|Korean Equities
-155|Taiwan Equities
-158|Malaysian Equities
-161|New Zealand Equities
-164|Chilean Equities
-181|US Equities
-191|CBOE Indices
-185|Indonesian Stocks
-187|Crypto Currencies
-209|European Indices
-211|Chi-X Australia
-217|Vietnam Equities
-223|US Mutual Funds
-227|Taipei Stocks
-229|Philippines Equities
-231|Turkey Equities
-235|Hang Seng Indices
 
