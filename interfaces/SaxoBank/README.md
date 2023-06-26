@@ -19,13 +19,10 @@ An active Enterprise, Professional, or Trader Services subscription.
 
 ## Required Applications for Development
 ### Node.js
-If you've never used Node on your PC, you will need to download and install the Node application. Node is a javascript server application that is used by millions of applications around the world.
+Node is a javascript server application that is used by millions of applications around the world and it allows for simple applications to be run on your PC as a server.
+If you've never used Node on your PC, you will need to download and install the Node application. 
 https://nodejs.org/en/download
-Note: The Node application can be installed anywhere and the default location they suggest is best. Do not install it into the same directory as any Optuma programs.
-
-### Install Visual Studio Code
-VSC is a code editor provided for free by Microsoft. You can download it from https://code.visualstudio.com/download
-If you already have VSC installed, make sure you restart it after installing Node above.
+Note: The Node application can be installed anywhere and the default location they suggest is best. There is no need to install it into the same directory as any Optuma programs.
 
 ## Installation
 The following instructions will step you through cloning the repository and connecting the sample Node server to Optuma.
