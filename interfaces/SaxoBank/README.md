@@ -58,24 +58,22 @@ https://www.developer.saxo/accounts/sim/signup
 By default, this link will create a simulation account but you can click on "Live Apps" in the left menu to create a connection to your account.
 There is no need to enable Trading as this interface does not pass through trades to Optuma.
 ```
-https://www.developer.saxo/openapi/appmanagement#/liveoverview
+https://www.developer.saxo/openapi/appmanagement#/
 ```
-> Update "Redirect URLs" in your Saxo App to http://localhost:3000/api/acb
+* Click on Create Application
+* Give it a name and description of your choice
+* Update "Redirect URL" to http://localhost:3000/api/acb
+* Set "Grant Type" to Code
+* Do Not check "Allow this app to be enabled for trading"
+* Once created, click on your App to see the details.
 
 ### Update the .env file with your App details
-The SaxoBank interface has a config file (.env) that needs to be configured.
+The SaxoBank interface has a config file (.env) that needs to be configured so that it can connect with the Saxo App you just created.
 Copy the .env.example to .env in the interface folder (save location as server.js)
-edit the .env and add any keys required.
+edit the .env and set the following - all values are found in the Saxo App you just created.
 * SAXOBANK_OAUTH_CLIENT_ID={App Key}
 * SAXOBANK_OAUTH_CLIENT_SECRET={App Secrets - first one in the list}
 * SAXOBANK_AUTHENTICATION_URL={Authorization Endpoint}
-
-#### Start Node Server
-This starts the server and in a browser you can go to the URL:Port (by default http://localhost:3000) and see a message confirming that your Node server is running.
-```
-cd Interfaces/<interface>
-node server.js
-```
 
 ### Setup the Optuma Configuration
 You need to copy the Custom_Providers.yaml file from this repository to the Optuma Settings folder. This file is set up as a sample to connect to the Node server that has already been started.
@@ -91,8 +89,14 @@ Once restarted, follow these steps in Optuma to make the connection:
 * From the *Data* menu, select *Configure Data Providers* and select the local data interface. 
   The data sources that are supported by this interface (defined in the Custom_Providers.yaml file) will be listed. Move them to the right.
 
-## Configuration File
+#### Start Node Server
+This starts the server and in a browser, you can go to the URL:Port (by default http://localhost:3000) to confirm that your Node server is running.
+```
+cd Interfaces/<interface>
+node server.js
+```
 
+## Configuration File
 The way that Optuma knows that there is a local data service available, and how to connect to it, is through the **Custom_Providers.yaml** file.
 As mentioned above, the default location for this file is
 ```
