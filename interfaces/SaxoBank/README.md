@@ -103,23 +103,6 @@ saxobank:
   timeframe: Day,Minute,Tick
   realtime: true
 ```
-| Field | Required | Type | Description | Example |
-| --- | --- | --- | --- | --- |
-| name | * | string | The name that will be displayed in Optuma. Usually, it is best to keep it as the name of the provider. | Bears Data |
-| code | * | string | A short unique code (3 t0 4 letters max) for this feed. The code is stored with the symbol in Optuma. | BEAR |
-| authenticate | * | node | The authentication settings | |
-| value | * | boolean | Does Optuma need to manage authentication settings for this connection. Typically, this is used in remote services where the client has an account and is required to log in. | true |
-| username || string | The default username. The user will be prompted to update this when they configure the connection in Optuma. | user |
-| password^ || string | The default password. The user will be prompted to update this when they configure the connection in Optuma. | password |
-| token^ || string | Some providers may require a token to be stored and sent. Typically, this is used in remote services where the client has an account and is required to log in. | JzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva |
-| web || string | This is the web address of a page that explains more about this connection. It is displayed as a *More Information* link in the connection configuration form in Optuma. | https://github.com/OptDev/local-data | 
-| server | * | string | The address of the REST server that Optuma needs to connect to. | http://localhost |
-| port | * | integer | The port, or channel, that the REST server is expecting connections on. This must be a unique unused port on each server/pc. | 3000 |
-| data_products || node | Optuma data product ids
-| id || integer | Optuma data product id. The Optuma Data Selection Ids they represent are included in the tool ReadMe file in this repository. If this is not set, individual securities will have to be manually added in Optuma. | 181 |
-| gmt-offset || integer | The GMT offset in hours for the data product if the timestamps in the data are sent in UTC. | -4, 0, 10 |
-| timeframes | * | set of strings | A comma-separated array of time frames which this service can return historical data for. | Day, Minute, Tick |
-| realtime | * | boolean | Does this service return streaming tick data? | false |
 
 
 
