@@ -17,6 +17,8 @@ If you would rather Optuma support staff assist you with this, you can book a su
 Optuma 2.2 (released July 2023)
 An active Enterprise, Professional, or Trader Services subscription. 
 
+### SaxoBank Account with API access
+
 ## Required Applications for Development
 ### Node.js
 Node is a javascript server application that is used by millions of applications around the world and it allows for simple applications to be run on your PC as a server.
