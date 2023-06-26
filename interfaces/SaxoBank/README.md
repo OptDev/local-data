@@ -29,7 +29,7 @@ The following instructions will step you through cloning the repository and conn
 
 ### Download the SaxoBank Folder by using the following link
 ```
-[git clone https://github.com/OptDev/local-data.git](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/OptDev/local-data/tree/main/interfaces/SaxoBank)
+https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/OptDev/local-data/tree/main/interfaces/SaxoBank
 ```
 Unzip the file to a folder on your PC. eg C:\SaxoBank
 
