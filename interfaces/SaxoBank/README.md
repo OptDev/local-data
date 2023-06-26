@@ -1,7 +1,13 @@
 # SaxoBank REST Server
 > This is under development and is not ready for use until this note is removed.
 
-This project allows anyone to connect Optuma to SaxoBank. SaxoBank is a very secure and complex interface and there are a number of steps involved to set this up. Please follow along carefully and pay attention to any prerequisits. 
+## Author
+Optuma Development Team.
+
+## Version
+0.01
+
+This project allows anyone to connect Optuma to SaxoBank. SaxoBank is a very secure and complex interface and there are a number of steps involved to set this up. Please follow along carefully and pay attention to any prerequisites. 
 
 If you would rather Optuma support staff assist you with this, you can book a support consultation at https://www.optuma.com/consults
 
