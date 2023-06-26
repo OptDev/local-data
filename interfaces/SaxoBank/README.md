@@ -12,12 +12,9 @@ This project allows anyone to connect Optuma to SaxoBank. SaxoBank is a very sec
 
 If you would rather Optuma support staff assist you with this, you can book a support consultation at https://www.optuma.com/consults
 
-## Prerequisites
-### Optuma
+## Optuma Requirements
 Optuma 2.2 (released July 2023)
 An active Enterprise, Professional, or Trader Services subscription. 
-
-### SaxoBank Account with API access
 
 ## Required Applications for Development
 ### Node.js
@@ -44,12 +41,34 @@ cd C:\SaxoBank
 * Install Node Packages
 ```
 npm install
-```  
+```
 
-#### Configure Server
+## SaxoBank Configuration
+### Enable Market Data in Saxo Trader Go
+Follow the instructions on this page to enable Market Data access via the Open API.
+```
+https://www.developer.saxo/excel/user-guide/enabling-market-data
+```
+### Create an OpenAPI simulation account in the SaxoBank Developer Portal
+Even if you don't have a SaxoBank account, you can create a simulation account and link that to Optuma.
+```
+https://www.developer.saxo/accounts/sim/signup
+```
+### Create an OpenAPI Application in SaxoBank
+By default, this link will create a simulation account but you can click on "Live Apps" in the left menu to create a connection to your account.
+There is no need to enable Trading as this interface does not pass through trades to Optuma.
+```
+https://www.developer.saxo/openapi/appmanagement#/liveoverview
+```
+> Update "Redirect URLs" in your Saxo App to http://localhost:3000/api/acb
+
+### Update the .env file with your App details
 The SaxoBank interface has a config file (.env) that needs to be configured.
 Copy the .env.example to .env in the interface folder (save location as server.js)
 edit the .env and add any keys required.
+* SAXOBANK_OAUTH_CLIENT_ID={App Key}
+* SAXOBANK_OAUTH_CLIENT_SECRET={App Secrets - first one in the list}
+* SAXOBANK_AUTHENTICATION_URL={Authorization Endpoint}
 
 #### Start Node Server
 This starts the server and in a browser you can go to the URL:Port (by default http://localhost:3000) and see a message confirming that your Node server is running.
