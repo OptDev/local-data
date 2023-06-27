@@ -187,7 +187,7 @@ app.get('/api/instruments', (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`)
+  console.log(`SaxoBank Server is running on port ${port}`)
 })
 
 // refresh access-token for all clients every 10 minutes

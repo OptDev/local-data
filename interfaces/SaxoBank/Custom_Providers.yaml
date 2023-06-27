@@ -19,3 +19,4 @@ saxobank:
       gmt-offset: -4
   timeframe: Day,Minute
   realtime: true
+  connection_command: node C:\local-data\interfaces\SaxoBank\server.js

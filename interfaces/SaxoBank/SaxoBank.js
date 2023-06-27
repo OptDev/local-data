@@ -572,7 +572,7 @@ class SaxoBank {
     axios
       .put('https://' + process.env.SAXOBANK_WEB_SOCKET_URL + '/authorize?contextid=' + contextId, null, config)
       .then((response) => {
-        console.log(response)
+        if (process.env.DEBUG === 'true') console.log(response)
       })
       .catch((error) => {
         console.error(error)
@@ -651,7 +651,7 @@ class SaxoBank {
         await axios
           .delete(url, config)
           .then((res) => {
-            console.log('Unsubscribe ' + symbol)
+            if (process.env.DEBUG === 'true') console.log('Unsubscribe ' + symbol)
           })
           .catch((err) => {
             // console.log(error.response.data)
@@ -719,7 +719,7 @@ class SaxoBank {
     axios
       .post(url, payload, config)
       .then((response) => {
-        console.log('Subscribe ' + symbol)
+        if (process.env.DEBUG === 'true') console.log('Subscribe ' + symbol)
       })
       .catch((error) => {
         // console.log(error.response.data)
@@ -727,13 +727,13 @@ class SaxoBank {
   }
 
   #handleSocketOpen() {
-    console.log('Streaming connected.')
+    if (process.env.DEBUG === 'true') console.log('Streaming connected.')
   }
 
   #handleSocketClose(event) {
     // Status codes: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
     if (event.wasClean === true) {
-      console.log('Streaming disconnected with code ' + event.code + '.') // Most likely 1000 (Normal Closure), or 1001 (Going Away)
+      if (process.env.DEBUG === 'true') console.log('Streaming disconnected with code ' + event.code + '.') // Most likely 1000 (Normal Closure), or 1001 (Going Away)
     } else {
       console.error('Streaming disconnected with code ' + event.code + '.')
       console.log('event', event)
@@ -799,7 +799,7 @@ class SaxoBank {
   #writeStreamingData(req, res, message) {
     const symbol = message.referenceId.split('-')[0]
     if (!message.payload.LastUpdated) {
-      console.log('LastUpdated is missing', message.payload)
+      if (process.env.DEBUG === 'true') console.log('LastUpdated is missing', message.payload)
       // message.payload.Timestamps also could be null
       if (message.payload.Timestamps) {
         if (message.payload.Timestamps.BidTime) message.payload.LastUpdated = message.payload.Timestamps.BidTime
