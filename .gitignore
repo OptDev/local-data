@@ -4,3 +4,4 @@ node_modules
 
 interfaces/SaxoBank/.env
 interfaces/SaxoBank/atd.900150983cd24fb0d6963f7d28e17f72.dat
+interfaces/SaxoBank/.env-test
