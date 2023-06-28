@@ -38,12 +38,30 @@ var symbolCodeMaps = []
 var symbolAssetTypeMaps = []
 
 class SaxoBank {
+  constructor() {
+    if (process.env.ACCOUNT_TYPE === 'LIVE') {
+      this.SAXOBANK_AUTHENTICATION_URL = 'https://live.logonvalidation.net'
+      this.SAXOBANK_API_BASE_URL = 'https://gateway.saxobank.com/openapi'
+      this.SAXOBANK_WEB_SOCKET_URL = 'streaming.saxobank.com/openapi/streamingws'
+    } else {
+      this.SAXOBANK_AUTHENTICATION_URL = 'https://sim.logonvalidation.net'
+      this.SAXOBANK_API_BASE_URL = 'https://gateway.saxobank.com/sim/openapi'
+      this.SAXOBANK_WEB_SOCKET_URL = 'streaming.saxobank.com/sim/openapi/streamingws'
+    }
+
+    if (process.env.DEBUG === 'true') {
+      console.log('AUTHENTICATION_URL=', this.SAXOBANK_AUTHENTICATION_URL)
+      console.log('API_BASE_URL=', this.SAXOBANK_API_BASE_URL)
+      console.log('WEB_SOCKET_URL=', this.SAXOBANK_WEB_SOCKET_URL)
+    }
+  }
+
   getAccessTokenDataFromProvider(req, res) {
     const { code, state } = req.query
     const opUsername = state
 
-    const client_id = process.env.SAXOBANK_OAUTH_CLIENT_ID
-    const client_secret = process.env.SAXOBANK_OAUTH_CLIENT_SECRET
+    const client_id = process.env.APP_KEY
+    const client_secret = process.env.APP_SECRET
     const auth = btoa(client_id + ':' + client_secret)
     const payload = {
       grant_type: 'authorization_code',
@@ -57,7 +75,7 @@ class SaxoBank {
       },
     }
     axios
-      .post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
+      .post(this.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
       .then((response) => {
         this.#saveAccessTokenData(opUsername, response.data)
         res.send('Authorization successfully granted')
@@ -128,8 +146,8 @@ class SaxoBank {
   }
 
   async #getAccessTokenFromRefreshToken(refreshToken) {
-    const client_id = process.env.SAXOBANK_OAUTH_CLIENT_ID
-    const client_secret = process.env.SAXOBANK_OAUTH_CLIENT_SECRET
+    const client_id = process.env.APP_KEY
+    const client_secret = process.env.APP_SECRET
     const auth = btoa(client_id + ':' + client_secret)
     const payload = {
       grant_type: 'refresh_token',
@@ -143,7 +161,7 @@ class SaxoBank {
       },
     }
     try {
-      const response = await axios.post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
+      const response = await axios.post(this.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
       return response.data
     } catch (error) {
       // console.log(error)
@@ -174,8 +192,8 @@ class SaxoBank {
     const accessTokenData = JSON.parse(fs.readFileSync('./' + accessTokenFile, 'utf8'))
     // Is refresh_token available?
     if (accessTokenData.refresh_token_expiry > currentTime) {
-      const client_id = process.env.SAXOBANK_OAUTH_CLIENT_ID
-      const client_secret = process.env.SAXOBANK_OAUTH_CLIENT_SECRET
+      const client_id = process.env.APP_KEY
+      const client_secret = process.env.APP_SECRET
       const auth = btoa(client_id + ':' + client_secret)
       const payload = {
         grant_type: 'refresh_token',
@@ -190,7 +208,7 @@ class SaxoBank {
       }
       // call axios in async mode
       axios
-        .post(process.env.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
+        .post(this.SAXOBANK_AUTHENTICATION_URL + '/token', payload, config)
         .then((response) => {
           // console.log('access_token renewed', response.data.access_token)
           this.#saveAccessTokenData(null, response.data, md5OpUsername)
@@ -220,11 +238,11 @@ class SaxoBank {
   #getAuthorizeFullUrl(opUsername) {
     const params = new URLSearchParams({
       response_type: 'code', // Please do not change. It must be 'code'
-      client_id: process.env.SAXOBANK_OAUTH_CLIENT_ID,
+      client_id: process.env.APP_KEY,
       state: opUsername,
       redirect_uri: process.env.LOCAL_DATA_CALLBACK_URL,
     })
-    return process.env.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
+    return this.SAXOBANK_AUTHENTICATION_URL + '/authorize?' + params.toString()
   }
 
   authorize(req, res) {
@@ -251,7 +269,7 @@ class SaxoBank {
         Keywords: q,
         // ExchangeId: ''
       })
-      const url = process.env.SAXOBANK_API_BASE_URL + '/ref/v1/instruments/?' + params.toString()
+      const url = this.SAXOBANK_API_BASE_URL + '/ref/v1/instruments/?' + params.toString()
       const config = {
         headers: {
           Authorization: 'Bearer ' + req.accessTokenData.access_token,
@@ -384,6 +402,17 @@ class SaxoBank {
     if (!symbol) {
       const codeWithMic = code + (mic ? ':' + mic : '')
       const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, codeWithMic, type)
+      if (map === false) {
+        const data = {
+          status: 1,
+          last_data_set: 1, // to tell this is the last response,
+          symbol: symbol,
+          code: code,
+          bars: [],
+        }
+        res.json(data)
+        return
+      }
       symbol = map.symbol
       type = map.type
     }
@@ -416,7 +445,7 @@ class SaxoBank {
           Time: new Date(i).toUTCString(),
           Count: 1000,
         })
-        const url = process.env.SAXOBANK_API_BASE_URL + '/chart/v1/charts/?' + params.toString()
+        const url = this.SAXOBANK_API_BASE_URL + '/chart/v1/charts/?' + params.toString()
         const config = {
           headers: {
             Authorization: 'Bearer ' + req.accessTokenData.access_token,
@@ -570,7 +599,7 @@ class SaxoBank {
       },
     }
     axios
-      .put('https://' + process.env.SAXOBANK_WEB_SOCKET_URL + '/authorize?contextid=' + contextId, null, config)
+      .put('https://' + this.SAXOBANK_WEB_SOCKET_URL + '/authorize?contextid=' + contextId, null, config)
       .then((response) => {
         if (process.env.DEBUG === 'true') console.log(response)
       })
@@ -590,7 +619,7 @@ class SaxoBank {
       AssetTypes: '',
       Keywords: code,
     })
-    const url = process.env.SAXOBANK_API_BASE_URL + '/ref/v1/instruments/?' + params.toString()
+    const url = this.SAXOBANK_API_BASE_URL + '/ref/v1/instruments/?' + params.toString()
     const config = {
       headers: {
         Authorization: 'Bearer ' + accessToken,
@@ -620,6 +649,8 @@ class SaxoBank {
         return codeSymbolMaps[code]
       }
     }
+
+    return false
   }
 
   async #unsubscribeTradePrices(req, res, contextId) {
@@ -628,6 +659,9 @@ class SaxoBank {
     if (!symbol) {
       const codeWithMic = code + (mic ? ':' + mic : '')
       const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, codeWithMic, type)
+      if (map === false) {
+        return
+      }
       symbol = map.symbol
       type = map.type
     }
@@ -641,8 +675,7 @@ class SaxoBank {
         referenceIds[contextId].splice(index, 1)
 
         // unsubscribe
-        const url =
-          process.env.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions/' + contextId + '/' + referenceId
+        const url = this.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions/' + contextId + '/' + referenceId
         const config = {
           headers: {
             Authorization: 'Bearer ' + req.accessTokenData.access_token,
@@ -679,6 +712,9 @@ class SaxoBank {
         if (!instruments[i].symbol) {
           const codeWithMic = instruments[i].code + (instruments[i].mic ? ':' + instruments[i].mic : '')
           const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, codeWithMic, instruments[i].type)
+          if (map === false) {
+            return
+          }
           instruments[i].symbol = map.symbol
           instruments[i].type = map.type
         }
@@ -700,7 +736,7 @@ class SaxoBank {
   #tradePricesSubscription(req, res, contextId, type, symbol) {
     const referenceId = this.#getReferenceId(req.opUsername, type, symbol)
     referenceIds[contextId].push(referenceId)
-    const url = process.env.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions'
+    const url = this.SAXOBANK_API_BASE_URL + '/trade/v1/prices/subscriptions'
     const payload = {
       Arguments: {
         AssetType: type,
@@ -970,7 +1006,7 @@ class SaxoBank {
     // const url = 'https://streaming.saxobank.com/sim/openapi/streamingws/connect?contextId=' + contextId
     const url =
       'wss://' +
-      process.env.SAXOBANK_WEB_SOCKET_URL +
+      this.SAXOBANK_WEB_SOCKET_URL +
       '/connect' +
       '?authorization=' +
       encodeURIComponent('BEARER ' + accessToken) +
