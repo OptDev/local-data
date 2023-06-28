@@ -94,12 +94,16 @@ https://www.developer.saxo/openapi/appmanagement#/
 ### Update the .env file with your App details
 
 The SaxoBank interface has a config file (.env) that needs to be configured so that it can connect with the Saxo App you just created.
-Copy the .env.example to .env in the interface folder (save location as server.js)
-edit the .env and set the following - all values are found in the Saxo App you just created.
+Edit the .env and set the following - the APP values are found in the Saxo App you just created. Set the account type either LIVE or DEMO depending on whether your saxo account is Simulated (demo) or Live.
 
-- SAXOBANK_OAUTH_CLIENT_ID={App Key}
-- SAXOBANK_OAUTH_CLIENT_SECRET={App Secrets - first one in the list}
-- SAXOBANK_AUTHENTICATION_URL={Authorization Endpoint}
+```
+APP_KEY=
+APP_SECRET=
+
+#Acccount Type either LIVE or DEMO
+ACCOUNT_TYPE=LIVE
+```
+
 
 ### Setup the Optuma Configuration
 
@@ -109,6 +113,11 @@ The default Optuma Settings location is
 
 ```
 {Documents}\Optuma\Local\Common
+```
+
+To allow Optuma to automatically start the Saxobank server, edit the Custom_Providers.yaml file to set the location of the server.js file
+```
+connection_command: node C:\SaxoBank\server.js
 ```
 
 if you moved your Optuma Document folder to a different location, then you will need to move this file to that location. You can see your current documents folder location in Optuma by selecting the _Settings_ menu and then _File Location Settings_.
