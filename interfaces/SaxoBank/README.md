@@ -120,7 +120,7 @@ To allow Optuma to automatically start the Saxobank server, edit the Custom_Prov
 connection_command: node C:\SaxoBank\server.js
 ```
 
-if you moved your Optuma Document folder to a different location, then you will need to move this file to that location. You can see your current documents folder location in Optuma by selecting the _Settings_ menu and then _File Location Settings_.
+If you moved your Optuma Document folder to a different location, then you will need to move this file to that location. You can see your current documents folder location in Optuma by selecting the _Settings_ menu and then _File Location Settings_.
 
 ### Restart Optuma
 
