@@ -94,6 +94,7 @@ https://www.developer.saxo/openapi/appmanagement#/
 ### Update the .env file with your App details
 
 The SaxoBank interface has a config file (.env) that needs to be configured so that it can connect with the Saxo App you just created.
+Copy the .env.example to .env in the interface folder (same location as server.js)
 Edit the .env file and set the following - the APP values are found in the Saxo App you just created. Set the account type as either LIVE or DEMO depending on whether your saxo account is Simulated (demo) or Live.
 
 ```
