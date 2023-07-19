@@ -713,7 +713,7 @@ class SaxoBank {
           const codeWithMic = instruments[i].code + (instruments[i].mic ? ':' + instruments[i].mic : '')
           const map = await this.#getSymbolFromCode(req.accessTokenData.access_token, codeWithMic, instruments[i].type)
           if (map === false) {
-            return
+            continue
           }
           instruments[i].symbol = map.symbol
           instruments[i].type = map.type
