@@ -1,5 +1,4 @@
 # Optuma Local Data REST Server
-> This is under development and is not ready for use until this note is removed.
 
 This project allows anyone to connect Optuma to a data service that Optuma does not support directly. Because nearly every data source has its own format, there needs to be an interpreter that can speak both the Optuma and data provider language. While a complex application can be written to do this, a simple Node server can also be used as the interpreter.
 
@@ -11,7 +10,7 @@ To create a new interface, you must develop or download the applicable javascrip
 
 ## Prerequisites
 ### Optuma
-This local data server interface was introduced in Optuma 2.2 (due July 2023). You can register for an Optuma trial at https://www.optuma.com/demo
+This local data server interface was introduced in Optuma 2.2 (released July 2023). You can register for an Optuma trial at https://www.optuma.com/demo
 
 ### Optuma Services
 The ability to access local data in Optuma is restricted to subscribers of Enterprise, Professional, or Trader Services. You need to make sure you have an active or trial subscription to Optuma before this will work.
